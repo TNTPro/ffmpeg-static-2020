@@ -1,3 +1,8 @@
+3.0
+ - added libsndfile, flac, linux-pam, libcap and alsa-lib-1.2.1.2 to the build
+ - more organizing
+ - separated build into fuctions for easier testing.
+
 2.9
  - added giflib, liblzma, libID3tag to the build
  - added xmlto
