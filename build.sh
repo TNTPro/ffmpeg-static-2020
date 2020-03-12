@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 2.8
+# ffmpeg static build 2.9
 
 set -e
 set -u
@@ -97,6 +97,18 @@ cd $BUILD_DIR
   "http://www.nasm.us/pub/nasm/releasebuilds/2.14/"
 
 download \
+  "giflib-5.2.1.tar.gz" \
+  "" \
+  "6f03aee4ebe54ac2cc1ab3e4b0a049e5" \
+  "https://sourceforge.net/projects/giflib/files/"
+
+download \
+  "xz-5.2.4.tar.gz" \
+  "" \
+  "5ace3264bdd00c65eeec2891346f65e6" \
+  "https://tukaani.org/xz/"
+
+download \
   "v1.2.5.tar.gz" \
   "zlib-1.2.5.tar.gz" \
   "9d8bc8be4fb6d9b369884c4a64398ed7" \
@@ -119,6 +131,12 @@ download \
   "zlib-1.2.11.tar.gz" \
   "0095d2d2d1f3442ce1318336637b695f" \
   "https://github.com/madler/zlib/archive/"
+
+download \
+  "libid3tag-0.15.1b.tar.gz" \
+  "" \
+  "e5808ad997ba32c498803822078748c3" \
+  "https://sourceforge.net/projects/mad/files/"
 
 download \
   "dev.tar.gz" \
@@ -192,6 +210,13 @@ download \
   "d5431bf5456522380d4c2c9c904a6d96" \
   "https://www.freedesktop.org/software/fontconfig/release/"
 
+# libass dependency
+download \
+  "2.6.4.tar.gz" \
+  "harfbuzz-2.6.4.tar.gz" \
+  "188407981048daf6d92d554cfeeed48e" \
+  "https://github.com/harfbuzz/harfbuzz/archive/"
+
 download \
   "imlib2-1.6.1.tar.bz2" \
   "" \
@@ -254,13 +279,6 @@ download \
   "fdk-aac-2.0.1.tar.gz" \
   "5b85f858ee416a058574a1028a3e1b85" \
   "https://github.com/mstorsjo/fdk-aac/archive"
-
-# libass dependency
-download \
-  "2.6.4.tar.gz" \
-  "harfbuzz-2.6.4.tar.gz" \
-  "188407981048daf6d92d554cfeeed48e" \
-  "https://github.com/harfbuzz/harfbuzz/archive/"
 
 download \
   "fribidi-1.0.8.tar.bz2" \
@@ -388,6 +406,25 @@ if [ $is_x86 -eq 1 ]; then
 fi
 
 echo
+/bin/echo -e "\e[93m*** Building GIFlib (imlib2 and libwebp Dependency) ***\e[39m"
+echo
+cd $BUILD_DIR/giflib-*
+make -j 4 PREFIX=$TARGET_DIR
+make install PREFIX=$TARGET_DIR
+find doc \( -name Makefile\* -o -name \*.1 \
+         -o -name \*.xml \) -exec rm -v {} \;
+install -v -dm755 $TARGET_DIR/share/doc/giflib-5.2.1
+cp -v -R doc/* $TARGET_DIR/share/doc/giflib-5.2.1
+
+echo
+/bin/echo -e "\e[93m*** Building xz to get liblzma ( Dependency) ***\e[39m"
+echo
+cd $BUILD_DIR/xz-*
+./configure --prefix=$TARGET_DIR
+make -j $jval
+make install
+
+echo
 /bin/echo -e "\e[93m*** Building zlib-1.2.5 (libPNG Dependency) ***\e[39m"
 echo
 cd $BUILD_DIR/zlib-1.2.5
@@ -404,7 +441,7 @@ echo
 /bin/echo -e "\e[93m*** Building libjpeg-turbo ***\e[39m"
 echo
 cd $BUILD_DIR/libjpeg-turbo-*
-cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include
+PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include
 make -j $jval
 make install
 
@@ -435,13 +472,22 @@ PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 
 echo
+/bin/echo -e "\e[93m*** Building libID3tag (imlib2 Dependency) ***\e[39m"
+echo
+cd $BUILD_DIR/libid3tag-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+./configure --prefix=$TARGET_DIR
+make -j $jval
+make install
+
+echo
 /bin/echo -e "\e[93m*** Building libzstd ***\e[39m"
 echo
 cd $BUILD_DIR/zstd-*
 cd build/cmake
 mkdir builddir
 cd builddir
-cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DZSTD_LEGACY_SUPPORT=ON -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DZSTD_BUILD_SHARED:BOOL=OFF -DZSTD_LZMA_SUPPORT:BOOL=OFF -DZSTD_ZLIB_SUPPORT:BOOL=ON ..
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DZSTD_LEGACY_SUPPORT=ON -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DZSTD_BUILD_SHARED:BOOL=OFF -DZSTD_LZMA_SUPPORT:BOOL=ON -DZSTD_ZLIB_SUPPORT:BOOL=ON ..
 #cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include
 make -j $jval
 make install
@@ -550,6 +596,15 @@ PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 
 echo
+/bin/echo -e "\e[93m*** Building FontConfig ***\e[39m"
+echo
+cd $BUILD_DIR/fontconfig*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
+PATH="$BIN_DIR:$PATH" make -j $jval
+make install
+
+echo
 /bin/echo -e "\e[93m*** Building harfbuzz (libass dependency) ***\e[39m"
 echo
 cd $BUILD_DIR/harfbuzz-*
@@ -563,15 +618,6 @@ echo
 /bin/echo -e "\e[93m*** ReBuilding FreeType2 after HarfBuzz ***\e[39m"
 echo
 cd $BUILD_DIR/freetype*
-make install
-
-echo
-/bin/echo -e "\e[93m*** Building FontConfig ***\e[39m"
-echo
-cd $BUILD_DIR/fontconfig*
-[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
-PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 
 echo
@@ -846,7 +892,7 @@ if [ "$platform" = "linux" ]; then
   PKG_CONFIG_PATH="$TARGET_DIR/lib/pkgconfig" ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-2.8 \
+    --extra-version=Tec-2.9 \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-libs="-lpthread -lm -lz" \
@@ -893,7 +939,7 @@ if [ "$platform" = "linux" ]; then
     --enable-libxml2 \
     --enable-libxvid \
     --enable-libzimg \
-  --disable-lzma \
+    --enable-lzma \
     --enable-openssl \
   --disable-sndio \
   --disable-sdl2 \
@@ -913,7 +959,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-2.8 \
+    --extra-version=Tec-2.9 \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \

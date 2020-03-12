@@ -1,3 +1,8 @@
+2.9
+ - added giflib, liblzma, libID3tag to the build
+ - added xmlto
+ - removed libass dependency
+
 2.8
  - added libzstd
  - enhanced libwebp
