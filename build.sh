@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 2.7
+# ffmpeg static build 2.8
 
 set -e
 set -u
@@ -119,6 +119,12 @@ download \
   "zlib-1.2.11.tar.gz" \
   "0095d2d2d1f3442ce1318336637b695f" \
   "https://github.com/madler/zlib/archive/"
+
+download \
+  "dev.tar.gz" \
+  "zstd-dev.tar.gz" \
+  "nil" \
+  "https://github.com/facebook/zstd/archive/"
 
 download \
   "v1.1.0.tar.gz" \
@@ -429,12 +435,24 @@ PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 
 echo
+/bin/echo -e "\e[93m*** Building libzstd ***\e[39m"
+echo
+cd $BUILD_DIR/zstd-*
+cd build/cmake
+mkdir builddir
+cd builddir
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DZSTD_LEGACY_SUPPORT=ON -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DZSTD_BUILD_SHARED:BOOL=OFF -DZSTD_LZMA_SUPPORT:BOOL=OFF -DZSTD_ZLIB_SUPPORT:BOOL=ON ..
+#cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include
+make -j $jval
+make install
+
+echo
 /bin/echo -e "\e[93m*** Building libwebp ***\e[39m"
 echo
 cd $BUILD_DIR/libwebp*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 ./autogen.sh
-./configure --prefix=$TARGET_DIR
+./configure --prefix=$TARGET_DIR --enable-libwebpdecoder --enable-libwebpmux --enable-libwebpextras
 make -j $jval
 make install
 
@@ -452,7 +470,7 @@ echo
 cd $BUILD_DIR/libwebp*
 make distclean
 ./autogen.sh
-./configure --prefix=$TARGET_DIR --disable-shared
+./configure --prefix=$TARGET_DIR --disable-shared --enable-libwebpdecoder --enable-libwebpmux --enable-libwebpextras
 make -j $jval
 make install
 
@@ -521,7 +539,7 @@ PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 
 echo
-/bin/echo -e "\e[93m*** Building FreeType2 ***\e[39m"
+/bin/echo -e "\e[93m*** Building FreeType2 (libass dependency) ***\e[39m"
 echo
 cd $BUILD_DIR/freetype*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
@@ -532,7 +550,7 @@ PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 
 echo
-/bin/echo -e "\e[93m*** Building harfbuzz ***\e[39m"
+/bin/echo -e "\e[93m*** Building harfbuzz (libass dependency) ***\e[39m"
 echo
 cd $BUILD_DIR/harfbuzz-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
@@ -572,7 +590,7 @@ cd $BUILD_DIR/libcaca-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 sed -i 's/"$amvers" "<" "1.5"/"$amvers" "<" "1.05"/g' ./bootstrap
 ./bootstrap
-./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --enable-static --disable-shared --disable-doc --disable-ruby --disable-csharp --disable-java --disable-cxx --disable-ncurses --disable-x11 --disable-python --disable-cocoa --disable-slang
+./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --enable-static --disable-shared --disable-doc --disable-slang --disable-ruby --disable-csharp --disable-java --disable-cxx --disable-ncurses --disable-x11 #--disable-python --disable-cocoa
 make -j $jval
 make install
 
@@ -658,7 +676,7 @@ make -j $jval
 make install
 
 echo
-/bin/echo -e "\e[93m*** Building fribidi ***\e[39m"
+/bin/echo -e "\e[93m*** Building fribidi (libass dependency)***\e[39m"
 echo
 cd $BUILD_DIR/fribidi-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
@@ -828,7 +846,7 @@ if [ "$platform" = "linux" ]; then
   PKG_CONFIG_PATH="$TARGET_DIR/lib/pkgconfig" ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-2.7 \
+    --extra-version=Tec-2.8 \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-libs="-lpthread -lm -lz" \
@@ -836,10 +854,15 @@ if [ "$platform" = "linux" ]; then
     --bindir="$BIN_DIR" \
     --enable-pic \
     --enable-ffplay \
+    --enable-gpl \
+    --enable-nonfree \
+    --enable-version3 \
+  --disable-alsa \
+    --enable-bzlib \
+  --disable-chromaprint \
     --enable-fontconfig \
     --enable-frei0r \
-    --enable-gpl \
-    --enable-version3 \
+    --enable-iconv \
     --enable-libass \
     --enable-libcaca \
     --enable-libfreetype \
@@ -863,22 +886,26 @@ if [ "$platform" = "linux" ]; then
     --enable-libwebp \
     --enable-libx264 \
     --enable-libx265 \
+    --enable-libxcb \
+    --enable-libxcb-shm \
+    --enable-libxcb-xfixes \
+    --enable-libxcb-shape \
     --enable-libxml2 \
     --enable-libxvid \
     --enable-libzimg \
-    --enable-nonfree \
+  --disable-lzma \
     --enable-openssl \
-    --disable-vaapi \
-    --enable-vdpau
+  --disable-sndio \
+  --disable-sdl2 \
+  --disable-vaapi \
+    --enable-vdpau \
+  --disable-xlib \
+    --enable-zlib
 # Not working yet
-#    --enable-libcaca \
-#    --enable-vaapi \
+#    
 # Not tested yet
 #    --enable-avresample \
-#    --enable-libvorbis --enable-libtheora \
-#    --enable-libvorbis --enable-libvpx \
 #    --enable-libpulse \
-#    --enable-avresample \
 # ---------------
 elif [ "$platform" = "darwin" ]; then
   [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" \
@@ -886,7 +913,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-2.7 \
+    --extra-version=Tec-2.8 \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \

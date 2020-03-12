@@ -1,3 +1,7 @@
+2.8
+ - added libzstd
+ - enhanced libwebp
+
 2.7
  - added libtiff, libjpeg-turbo, libPNG
  - more organizing
