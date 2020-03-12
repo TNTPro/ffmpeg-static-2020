@@ -3,9 +3,9 @@
 # Install needed updates
 sudo apt install build-essential g++ gcc pkg-config tar
 # Install needed tools
-sudo apt install autoconf automake cmake curl gawk git gperf libtool ragel texi2html xmlto
+sudo apt install autoconf automake cmake curl gawk git gperf libtool ragel texi2html xmlto libtool-bin autogen autopoint
 # Install dependencies (only add if you don't build them yourself)
-sudo apt install libgdbm-dev libsqlite3-dev libreadline6-dev libncurses5-dev #Python (maybe others) dependencies #libx11-dev libxext-dev
+sudo apt install libgdbm-dev libsqlite3-dev libreadline6-dev libncurses5-dev libjbig-dev libudev-dev libdbus-1-dev #libx11-dev libxext-dev
 sudo apt install \
   frei0r-plugins-dev \
   libbz2-dev \
