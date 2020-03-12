@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 2.9
+# ffmpeg static build 3.0
 
 set -e
 set -u
@@ -8,7 +8,7 @@ echo
 date +%H:%M:%S
 
 jflag=
-jval=2
+jval=$(nproc)
 rebuild=0
 download_only=0
 uname -mpi | grep -qE 'x86|i386|i686' && is_x86=1 || is_x86=0
@@ -95,6 +95,24 @@ cd $BUILD_DIR
   "" \
   "bc1cdaa06fc522eefa35c4ba881348f5" \
   "http://www.nasm.us/pub/nasm/releasebuilds/2.14/"
+
+download \
+  "master.tar.gz" \
+  "linux-pam-master.tar.gz" \
+  "nil" \
+  "https://github.com/linux-pam/linux-pam/archive/"
+
+download \
+  "libcap-master.tar.gz" \
+  "" \
+  "nil" \
+  "https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/"
+
+download \
+  "alsa-lib-1.2.1.2.tar.bz2" \
+  "" \
+  "82ddd3698469beec147e4f4a67134ea0" \
+  "https://www.alsa-project.org/files/pub/lib/"
 
 download \
   "giflib-5.2.1.tar.gz" \
@@ -192,6 +210,12 @@ download \
   "b3b6d2c92f42a60667814358ab9f0cfd" \
   "https://www.python.org/ftp/python/2.7.17/"
 
+#download \
+#  "Python-3.8.1.tar.xz" \
+#  "" \
+#  "b3fb85fd479c0bf950c626ef80cacb57" \
+#  "https://www.python.org/ftp/python/3.8.1/"
+
 download \
   "libxml2-2.9.10.tar.gz" \
   "" \
@@ -216,6 +240,12 @@ download \
   "harfbuzz-2.6.4.tar.gz" \
   "188407981048daf6d92d554cfeeed48e" \
   "https://github.com/harfbuzz/harfbuzz/archive/"
+
+download \
+  "v2.3.1.tar.gz" \
+  "openjpeg-2.3.1.tar.gz" \
+  "3b9941dc7a52f0376694adb15a72903f" \
+  "https://github.com/uclouvain/openjpeg/archive/"
 
 download \
   "imlib2-1.6.1.tar.bz2" \
@@ -342,16 +372,16 @@ download \
   "https://github.com/sekrit-twc/zimg/archive/"
 
 download \
-  "v2.3.1.tar.gz" \
-  "openjpeg-2.3.1.tar.gz" \
-  "3b9941dc7a52f0376694adb15a72903f" \
-  "https://github.com/uclouvain/openjpeg/archive/"
-
-download \
   "v1.3.4.tar.gz" \
   "ogg-1.3.4.tar.gz" \
   "df1a9a95251a289aa5515b869db4b15f" \
   "https://github.com/xiph/ogg/archive/"
+
+download \
+  "master.tar.gz" \
+  "flac-master.tar.gz" \
+  "nil" \
+  "https://github.com/xiph/flac/archive/"
 
 download \
   "v1.3.6.tar.gz" \
@@ -360,16 +390,29 @@ download \
   "https://github.com/xiph/vorbis/archive/"
 
 download \
+  "Speex-1.2.0.tar.gz" \
+  "Speex-1.2.0.tar.gz" \
+  "4bec86331abef56129f9d1c994823f03" \
+  "https://github.com/xiph/speex/archive/"
+
+download \
+  "master.tar.gz" \
+  "libsndfile-master.tar.gz" \
+  "nil" \
+  "https://github.com/erikd/libsndfile/archive/"
+
+download \
   "libtheora-1.1.1.tar.gz" \
   "" \
   "bb4dc37f0dc97db98333e7160bfbb52b" \
   "http://downloads.xiph.org/releases/theora/"
 
-download \
-  "Speex-1.2.0.tar.gz" \
-  "Speex-1.2.0.tar.gz" \
-  "4bec86331abef56129f9d1c994823f03" \
-  "https://github.com/xiph/speex/archive/"
+##download \
+##  "master.tar.gz" \
+##  "pulseaudio-master.tar.gz" \
+##  "nil" \
+##  "https://github.com/pulseaudio/pulseaudio/archive/"
+#git clone https://github.com/pulseaudio/pulseaudio "$BUILD_DIR"/pulseaudio-git
 
 download \
   "n4.2.2.tar.gz" \
@@ -381,9 +424,8 @@ download \
 
 TARGET_DIR_SED=$(echo $TARGET_DIR | awk '{gsub(/\//, "\\/"); print}')
 
-spd-say --rate -25 "Starting dependencies"
-
-if [ $is_x86 -eq 1 ]; then
+yasm(){
+  if [ $is_x86 -eq 1 ]; then
     echo
     /bin/echo -e "\e[93m*** Building yasm ***\e[39m"
     echo
@@ -392,9 +434,11 @@ if [ $is_x86 -eq 1 ]; then
     [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --bindir=$BIN_DIR
     make -j $jval
     make install
-fi
+  fi
+}
 
-if [ $is_x86 -eq 1 ]; then
+nasm(){
+  if [ $is_x86 -eq 1 ]; then
     echo
     /bin/echo -e "\e[93m*** Building nasm ***\e[39m"
     echo
@@ -403,19 +447,70 @@ if [ $is_x86 -eq 1 ]; then
     [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --bindir=$BIN_DIR
     make -j $jval
     make install
-fi
+  fi
+}
 
+linuxPAM(){
+echo
+/bin/echo -e "\e[93m*** Building linux-PAM ***\e[39m"
+echo
+cd $BUILD_DIR/linux-pam*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+./autogen.sh
+./configure --prefix=$TARGET_DIR --disable-doc
+make -j $jval
+make install
+}
+
+libcap(){
+# there's no configure, we have to edit Makefile directly
+echo
+/bin/echo -e "\e[93m*** Building libCap (with PAM) ***\e[39m"
+echo
+cd $BUILD_DIR/libcap-master
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+sed -i '/FAKEROOT=$(DESTDIR)/a prefix=${TARGET_DIR}' ./Make.Rules
+#./configure --prefix=$TARGET_DIR
+make -j $jval
+cd $BUILD_DIR/libcap-master/libcap
+cp libcap.a $TARGET_DIR/lib
+cp libcap.so.2.* $TARGET_DIR/lib
+ln -sf $TARGET_DIR/lib/libcap.so.2.* $TARGET_DIR/lib/libcap.so.2
+ln -sf $TARGET_DIR/lib/libcap.so.2 $TARGET_DIR/lib/libcap.so
+mkdir -p $TARGET_DIR/lib/pkgconfig
+cp libcap.pc -t $TARGET_DIR/lib/pkgconfig
+cp libpsx.pc -t $TARGET_DIR/lib/pkgconfig
+#cp cap_test $TARGET_DIR/sbin
+mkdir -p $TARGET_DIR/sbin
+cp _makenames $TARGET_DIR/sbin
+cp *.h $TARGET_DIR/include
+cp -R include/* $TARGET_DIR/include
+}
+
+ALSAlib(){
+echo
+/bin/echo -e "\e[93m*** ALSAlib ***\e[39m"
+echo
+cd $BUILD_DIR/alsa-lib-*
+./configure --prefix=$TARGET_DIR
+make -j $jval
+make install
+}
+
+GIFlib(){
 echo
 /bin/echo -e "\e[93m*** Building GIFlib (imlib2 and libwebp Dependency) ***\e[39m"
 echo
 cd $BUILD_DIR/giflib-*
-make -j 4 PREFIX=$TARGET_DIR
+make -j $jval PREFIX=$TARGET_DIR
 make install PREFIX=$TARGET_DIR
 find doc \( -name Makefile\* -o -name \*.1 \
          -o -name \*.xml \) -exec rm -v {} \;
 install -v -dm755 $TARGET_DIR/share/doc/giflib-5.2.1
 cp -v -R doc/* $TARGET_DIR/share/doc/giflib-5.2.1
+}
 
+liblzma(){
 echo
 /bin/echo -e "\e[93m*** Building xz to get liblzma ( Dependency) ***\e[39m"
 echo
@@ -423,7 +518,9 @@ cd $BUILD_DIR/xz-*
 ./configure --prefix=$TARGET_DIR
 make -j $jval
 make install
+}
 
+zlib125(){
 echo
 /bin/echo -e "\e[93m*** Building zlib-1.2.5 (libPNG Dependency) ***\e[39m"
 echo
@@ -436,7 +533,9 @@ elif [ "$platform" = "darwin" ]; then
 fi
 make -j $jval
 make install
+}
 
+libjpegturbo(){
 echo
 /bin/echo -e "\e[93m*** Building libjpeg-turbo ***\e[39m"
 echo
@@ -444,7 +543,9 @@ cd $BUILD_DIR/libjpeg-turbo-*
 PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include
 make -j $jval
 make install
+}
 
+libPNG(){
 echo
 /bin/echo -e "\e[93m*** Building libPNG ***\e[39m"
 echo
@@ -452,7 +553,9 @@ cd $BUILD_DIR/libpng-*
 ./configure --prefix=$TARGET_DIR --libdir=$TARGET_DIR/lib --includedir=$TARGET_DIR/include CPPFLAGS=-I$TARGET_DIR/include
 make -j $jval
 make install
+}
 
+zlib1211(){
 echo
 /bin/echo -e "\e[93m*** Building zlib-1.2.11 (Python Dependency) ***\e[39m"
 echo
@@ -470,7 +573,9 @@ elif [ "$platform" = "darwin" ]; then
 fi
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+libID3tag(){
 echo
 /bin/echo -e "\e[93m*** Building libID3tag (imlib2 Dependency) ***\e[39m"
 echo
@@ -479,7 +584,9 @@ cd $BUILD_DIR/libid3tag-*
 ./configure --prefix=$TARGET_DIR
 make -j $jval
 make install
+}
 
+libzstd(){
 echo
 /bin/echo -e "\e[93m*** Building libzstd ***\e[39m"
 echo
@@ -491,7 +598,9 @@ cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DZSTD_LEGACY_SUP
 #cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include
 make -j $jval
 make install
+}
 
+libwebp(){
 echo
 /bin/echo -e "\e[93m*** Building libwebp ***\e[39m"
 echo
@@ -501,7 +610,9 @@ cd $BUILD_DIR/libwebp*
 ./configure --prefix=$TARGET_DIR --enable-libwebpdecoder --enable-libwebpmux --enable-libwebpextras
 make -j $jval
 make install
+}
 
+libTIFF(){
 echo
 /bin/echo -e "\e[93m*** Building libTIFF ***\e[39m"
 echo
@@ -509,7 +620,9 @@ cd $BUILD_DIR/tiff-*
 ./configure --prefix=$TARGET_DIR
 make -j $jval
 make install
+}
 
+libwebpRB(){
 echo
 /bin/echo -e "\e[93m*** ReBuilding libwebp ***\e[39m"
 echo
@@ -519,34 +632,42 @@ make distclean
 ./configure --prefix=$TARGET_DIR --disable-shared --enable-libwebpdecoder --enable-libwebpmux --enable-libwebpextras
 make -j $jval
 make install
+}
 
-#echo
-#/bin/echo -e "\e[93m*** Building util-macros (xorgproto Dependency) ***\e[39m"
-#echo
-#cd $BUILD_DIR/util-macros-*
-#[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-#./configure --prefix=$TARGET_DIR
-#make install
+utilmacros(){
+echo
+/bin/echo -e "\e[93m*** Building util-macros (xorgproto Dependency) ***\e[39m"
+echo
+cd $BUILD_DIR/util-macros-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+./configure --prefix=$TARGET_DIR
+make install
+}
 
-#echo
-#/bin/echo -e "\e[93m*** Building xorgproto (libXau Dependency) ***\e[39m"
-#echo
-#cd $BUILD_DIR/xorgproto-*
-#[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-#mkdir build
-#cd build/
-#meson --prefix=$TARGET_DIR .. && ninja
-#ninja install
+xorgproto(){
+echo
+/bin/echo -e "\e[93m*** Building xorgproto (libXau Dependency) ***\e[39m"
+echo
+cd $BUILD_DIR/xorgproto-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+mkdir build
+cd build/
+meson --prefix=$TARGET_DIR .. && ninja
+ninja install
+}
 
+tcl(){
 echo
 /bin/echo -e "\e[93m*** Building tcl (tkinter Dependency) ***\e[39m"
 echo
 cd $BUILD_DIR/tcl*/unix
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./configure --prefix=$TARGET_DIR --enable-static
+./configure --prefix=$TARGET_DIR
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+tkinter(){
 echo
 /bin/echo -e "\e[93m*** Building tkinter (Python Dependency) ***\e[39m"
 echo
@@ -555,7 +676,9 @@ cd $BUILD_DIR/tk*/unix
 ./configure --prefix=$TARGET_DIR --with-tcl=$BUILD_DIR/tcl8.6.10/unix --enable-static
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+libexpat(){
 echo
 /bin/echo -e "\e[93m*** Building libexpat (fontconfig Dependency) ***\e[39m"
 echo
@@ -565,7 +688,9 @@ cd $BUILD_DIR/libexpat-*/expat
 ./configure --prefix=$TARGET_DIR --enable-static
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+Python(){
 echo
 /bin/echo -e "\e[93m*** Building Python 2.7 ***\e[39m"
 echo
@@ -574,7 +699,9 @@ cd $BUILD_DIR/Python-*
 [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-shared --with-system-expat --with-system-ffi --with-ensurepip=yes --enable-unicode=ucs4
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+libXML(){
 echo
 /bin/echo -e "\e[93m*** Building libXML ***\e[39m"
 echo
@@ -583,7 +710,9 @@ cd $BUILD_DIR/libxml*
 [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-shared --with-history --with-python=$TARGET_DIR/bin/python3
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+FreeType2(){
 echo
 /bin/echo -e "\e[93m*** Building FreeType2 (libass dependency) ***\e[39m"
 echo
@@ -594,7 +723,9 @@ sed -r "s:.*(#.*SUBPIXEL_RENDERING) .*:\1:" -i include/freetype/config/ftoption.
 [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-freetype-config --disable-shared
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+FontConfig(){
 echo
 /bin/echo -e "\e[93m*** Building FontConfig ***\e[39m"
 echo
@@ -603,7 +734,9 @@ cd $BUILD_DIR/fontconfig*
 [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+harfbuzz(){
 echo
 /bin/echo -e "\e[93m*** Building harfbuzz (libass dependency) ***\e[39m"
 echo
@@ -613,13 +746,28 @@ PATH="$BIN_DIR:$PATH" ./autogen.sh
 PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
 make -j $jval
 make install
+}
 
+FreeType2RB(){
 echo
 /bin/echo -e "\e[93m*** ReBuilding FreeType2 after HarfBuzz ***\e[39m"
 echo
 cd $BUILD_DIR/freetype*
 make install
+}
 
+openjpeg(){
+echo
+/bin/echo -e "\e[93m*** Building openjpeg ***\e[39m"
+echo
+cd $BUILD_DIR/openjpeg-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS:bool=off
+make -j $jval
+make install
+}
+
+imlib2(){
 echo
 /bin/echo -e "\e[93m*** Building imlib2 (libcaca dependency)***\e[39m"
 echo
@@ -628,7 +776,9 @@ cd $BUILD_DIR/imlib2-*
 [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+libcaca(){
 echo
 /bin/echo -e "\e[93m*** Building libcaca... ***\e[39m"
 echo
@@ -639,7 +789,9 @@ sed -i 's/"$amvers" "<" "1.5"/"$amvers" "<" "1.05"/g' ./bootstrap
 ./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --enable-static --disable-shared --disable-doc --disable-slang --disable-ruby --disable-csharp --disable-java --disable-cxx --disable-ncurses --disable-x11 #--disable-python --disable-cocoa
 make -j $jval
 make install
+}
 
+voamrwbenc(){
 echo
 /bin/echo -e "\e[93m*** Building vo-amrwbenc... ***\e[39m"
 echo
@@ -648,7 +800,9 @@ cd $BUILD_DIR/vo-amrwbenc-*
 ./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static
 make -j $jval
 make install
+}
 
+opencoreamr(){
 echo
 /bin/echo -e "\e[93m*** Building opencore-amr... ***\e[39m"
 echo
@@ -657,7 +811,9 @@ cd $BUILD_DIR/opencore-amr*
 ./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static
 make -j $jval
 make install
+}
 
+OpenSSL(){
 echo
 /bin/echo -e "\e[93m*** Building OpenSSL ***\e[39m"
 echo
@@ -670,27 +826,33 @@ elif [ "$platform" = "linux" ]; then
 fi
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+libilbc(){
 echo
 /bin/echo -e "\e[93m*** Building libilbc ***\e[39m"
 echo
 cd $BUILD_DIR/libilbc-*
 sed 's/lib64/lib/g' -i CMakeLists.txt
-cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS=0
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS=0 -DCMAKE_LIBRARY_OUTPUT_DIRECTORY:PATH=$TARGET_DIR/lib
 make -j $jval
 make install
+}
 
+Xvid(){
 echo
 /bin/echo -e "\e[93m*** Building Xvid ***\e[39m"
 echo
 cd $BUILD_DIR/xvidcore/build/generic
 sed -i 's/^LN_S=@LN_S@/& -f -v/' platform.inc.in
-PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static
+PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 chmod -v 755 $TARGET_DIR/lib/libxvidcore.so.4.3
 install -v -m755 -d $TARGET_DIR/share/doc/xvidcore-1.3.5/examples && install -v -m644 ../../doc/* $TARGET_DIR/share/doc/xvidcore-1.3.5 && install -v -m644 ../../examples/* $TARGET_DIR/share/doc/xvidcore-1.3.5/examples
+}
 
+x264(){
 echo
 /bin/echo -e "\e[93m*** Building x264 ***\e[39m"
 echo
@@ -699,7 +861,9 @@ cd $BUILD_DIR/x264*
 [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static --disable-opencl --enable-pic
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+x265(){
 echo
 /bin/echo -e "\e[93m*** Building x265 ***\e[39m"
 echo
@@ -710,7 +874,9 @@ PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_
 sed -i 's/-lgcc_s/-lgcc_eh/g' x265.pc
 make -j $jval
 make install
+}
 
+fdkaac(){
 echo
 /bin/echo -e "\e[93m*** Building fdk-aac ***\e[39m"
 echo
@@ -720,16 +886,20 @@ autoreconf -fiv
 [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --disable-shared
 make -j $jval
 make install
+}
 
+fribidi(){
 echo
 /bin/echo -e "\e[93m*** Building fribidi (libass dependency)***\e[39m"
 echo
 cd $BUILD_DIR/fribidi-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./configure --prefix=$TARGET_DIR --disable-shared --enable-static --disable-docs
+./configure --prefix=$TARGET_DIR --disable-shared --enable-static
 make -j $jval
 make install
+}
 
+libass(){
 echo
 /bin/echo -e "\e[93m*** Building libass ***\e[39m"
 echo
@@ -739,7 +909,9 @@ PATH="$BIN_DIR:$PATH" ./autogen.sh
 PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-shared
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+mp3lame(){
 echo
 /bin/echo -e "\e[93m*** Building mp3lame ***\e[39m"
 echo
@@ -750,7 +922,9 @@ uname -a | grep -q 'aarch64' && lame_build_target="--build=arm-linux" || lame_bu
 [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-nasm --disable-shared $lame_build_target
 make
 make install
+}
 
+libtwolame(){
 echo
 /bin/echo -e "\e[93m*** Building libtwolame ***\e[39m"
 echo
@@ -759,17 +933,22 @@ cd $BUILD_DIR/twolame-*
 ./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static
 make -j $jval
 make install
+}
 
+opus(){
 echo
 /bin/echo -e "\e[93m*** Building opus ***\e[39m"
 echo
 cd $BUILD_DIR/opus*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 ./autogen.sh
-[ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --disable-shared
-make
+[ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --enable-intrinsics
+make -j $jval
 make install
+sed -i "s/Version: unknown/Version: 1.3.1/g" $TARGET_DIR/lib/pkgconfig/opus.pc
+}
 
+libpvx(){
 echo
 /bin/echo -e "\e[93m*** Building libvpx ***\e[39m"
 echo
@@ -778,14 +957,15 @@ cd $BUILD_DIR/libvpx*
 [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-examples --disable-unit-tests --enable-pic
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
+}
 
+librtmp(){
 echo
 /bin/echo -e "\e[93m*** Building librtmp ***\e[39m"
 echo
 cd $BUILD_DIR/rtmpdump-*
 cd librtmp
 [ $rebuild -eq 1 ] && make distclean || true
-
 # there's no configure, we have to edit Makefile directly
 if [ "$platform" = "linux" ]; then
   sed -i "/INC=.*/d" ./Makefile # Remove INC if present from previous run.
@@ -795,7 +975,9 @@ elif [ "$platform" = "darwin" ]; then
   sed -i "" "s/prefix=.*/prefix=${TARGET_DIR_SED}/" ./Makefile
 fi
 make install_base
+}
 
+libsoxr(){
 echo
 /bin/echo -e "\e[93m*** Building libsoxr ***\e[39m"
 echo
@@ -804,7 +986,9 @@ cd $BUILD_DIR/soxr-*
 PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS:bool=off -DWITH_OPENMP:bool=off -DBUILD_TESTS:bool=off
 make -j $jval
 make install
+}
 
+libvidstab(){
 echo
 /bin/echo -e "\e[93m*** Building libvidstab ***\e[39m"
 echo
@@ -818,16 +1002,9 @@ fi
 PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR"
 make -j $jval
 make install
+}
 
-echo
-/bin/echo -e "\e[93m*** Building openjpeg ***\e[39m"
-echo
-cd $BUILD_DIR/openjpeg-*
-[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS:bool=off
-make -j $jval
-make install
-
+zimg(){
 echo
 /bin/echo -e "\e[93m*** Building zimg ***\e[39m"
 echo
@@ -837,7 +1014,9 @@ cd $BUILD_DIR/zimg-release-*
 ./configure --enable-static  --prefix=$TARGET_DIR --disable-shared
 make -j $jval
 make install
+}
 
+libogg(){
 echo
 /bin/echo -e "\e[93m*** Building libogg ***\e[39m"
 echo
@@ -847,7 +1026,21 @@ cd $BUILD_DIR/ogg*
 ./configure --prefix=$TARGET_DIR --disable-shared
 make -j $jval
 make install
+}
 
+libflac(){
+echo
+/bin/echo -e "\e[93m*** Building libflac ***\e[39m"
+echo
+cd $BUILD_DIR/flac-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+./autogen.sh
+PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-shared --disable-thorough-tests
+make -j $jval
+make install
+}
+
+libvorbis(){
 echo
 /bin/echo -e "\e[93m*** Building libvorbis ***\e[39m"
 echo
@@ -857,7 +1050,33 @@ cd $BUILD_DIR/vorbis*
 ./configure --prefix=$TARGET_DIR --disable-shared
 make -j $jval
 make install
+}
 
+libspeex(){
+echo
+/bin/echo -e "\e[93m*** Building libspeex ***\e[39m"
+echo
+cd $BUILD_DIR/speex*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+./autogen.sh
+./configure --prefix=$TARGET_DIR
+make -j $jval
+make install
+}
+
+libsndfile(){
+echo
+/bin/echo -e "\e[93m*** Building libsndfile ***\e[39m"
+echo
+cd $BUILD_DIR/libsndfile-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+./autogen.sh
+./configure --prefix=$TARGET_DIR --enable-experimental --disable-shared
+make -j $jval
+make install
+}
+
+libtheora(){
 echo
 /bin/echo -e "\e[93mCompiling libtheora...\e[39m"
 echo
@@ -866,19 +1085,23 @@ sed -i 's/png_\(sizeof\)/\1/g' examples/png2theora.c
 ./configure --prefix=$TARGET_DIR --disable-oggtest --disable-vorbistest --with-ogg-includes="$TARGET_DIR/include" --with-ogg-libraries="$TARGET_DIR/build/lib" --with-vorbis-includes="$TARGET_DIR/include" --with-vorbis-libraries="$TARGET_DIR/build/lib" --disable-shared --enable-static
 make -j $jval
 make install
+}
 
+PulseAudio(){
 echo
-/bin/echo -e "\e[93m*** Building libspeex ***\e[39m"
+/bin/echo -e "\e[93m*** Building PulseAudio ***\e[39m"
 echo
-cd $BUILD_DIR/speex*
+cd $BUILD_DIR/pulseaudio-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./autogen.sh
-./configure --prefix=$TARGET_DIR --disable-shared
-make -j $jval
+NOCONFIGURE=1 ./bootstrap.sh
+#./bootstrap.sh
+#./configure --prefix=$TARGET_DIR --enable-static --with-udev-rules-dir=$TARGET_DIR/lib/udev/rules.d --with-systemduserunitdir=$TARGET_DIR/etc/systemd/user --without-caps --disable-shared
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared --disable-rpath --disable-fast-install --disable-tests --disable-x11 --disable-atomic-arm-linux-helpers --disable-memfd --disable-coreaudio-output --disable-solaris --disable-solaris --disable-glib2 --disable-gtk3 --disable-gsettings --disable-gconf --disable-avahi --disable-jack --disable-asyncns --disable-bluez5 --disable-systemd-daemon --disable-systemd-login --disable-systemd-journal --disable-manpages --disable-gstreamer
+make
 make install
+}
 
-spd-say --rate -25 "Dependencies built"
-
+ffmpeg(){
 # FFMpeg
 echo
 /bin/echo -e "\e[93m*** Building FFmpeg ***\e[39m"
@@ -892,7 +1115,7 @@ if [ "$platform" = "linux" ]; then
   PKG_CONFIG_PATH="$TARGET_DIR/lib/pkgconfig" ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-2.9 \
+    --extra-version=Tec-3.0 \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-libs="-lpthread -lm -lz" \
@@ -911,15 +1134,16 @@ if [ "$platform" = "linux" ]; then
     --enable-iconv \
     --enable-libass \
     --enable-libcaca \
-    --enable-libfreetype \
-    --enable-libfribidi \
     --enable-libfdk-aac \
     --enable-libfreetype \
+    --enable-libfribidi \
+    --enable-libilbc \
     --enable-libmp3lame \
     --enable-libopencore-amrnb \
     --enable-libopencore-amrwb \
     --enable-libopenjpeg \
     --enable-libopus \
+  --disable-libpulse \
     --enable-librtmp \
     --enable-libsoxr \
     --enable-libspeex \
@@ -949,9 +1173,65 @@ if [ "$platform" = "linux" ]; then
     --enable-zlib
 # Not working yet
 #    
+# ---------------
 # Not tested yet
+#
+#  --enable-gnutls
+#  --enable-ladspa          enable LADSPA audio filtering [no]
+#  --enable-libaom          enable AV1 video encoding/decoding via libaom [no]
+#  --enable-libaribb24      enable ARIB text and caption decoding via libaribb24 [no]
+#  --enable-libbluray       enable BluRay reading using libbluray [no]
+#  --enable-libbs2b         enable bs2b DSP library [no]
+#  --enable-libcelt         enable CELT decoding via libcelt [no]
+#  --enable-libcdio         enable audio CD grabbing with libcdio [no]
+#  --enable-libcodec2       enable codec2 en/decoding using libcodec2 [no]
+#  --enable-libdav1d        enable AV1 decoding via libdav1d [no]
+#  --enable-libdavs2        enable AVS2 decoding via libdavs2 [no]
+#  --enable-libdc1394       enable IIDC-1394 grabbing using libdc1394 and libraw1394 [no]
+#  --enable-libflite        enable flite (voice synthesis) support via libflite [no]
+#  --enable-libgme          enable Game Music Emu via libgme [no]
+#  --enable-libgsm          enable GSM de/encoding via libgsm [no]
+#  --enable-libiec61883     enable iec61883 via libiec61883 [no]
+#    --enable-libilbc         enable iLBC de/encoding via libilbc [no]
+#  --enable-libjack         enable JACK audio sound server [no]
+#  --enable-libklvanc       enable Kernel Labs VANC processing [no]
+#  --enable-libkvazaar      enable HEVC encoding via libkvazaar [no]
+#  --enable-liblensfun      enable lensfun lens correction [no]
+#  --enable-libmodplug      enable ModPlug via libmodplug [no]
+#  --enable-libopencv       enable video filtering via libopencv [no]
+#  --enable-libopenh264     enable H.264 encoding via OpenH264 [no]
+#  --enable-libopenmpt      enable decoding tracked files via libopenmpt [no]
+#  --enable-librav1e        enable AV1 encoding via rav1e [no]
+#  --enable-librsvg         enable SVG rasterization via librsvg [no]
+#  --enable-librubberband   enable rubberband needed for rubberband filter [no]
+#  --enable-libshine        enable fixed-point MP3 encoding via libshine [no]
+#  --enable-libsmbclient    enable Samba protocol via libsmbclient [no]
+#  --enable-libsnappy       enable Snappy compression, needed for hap encoding [no]
+#  --enable-libsrt          enable Haivision SRT protocol via libsrt [no]
+#  --enable-libssh          enable SFTP protocol via libssh [no]
+#  --enable-libtensorflow   enable TensorFlow as a DNN module backend for DNN based filters like sr [no]
+#  --enable-libtesseract    enable Tesseract, needed for ocr filter [no]
+#  --enable-libtls          enable LibreSSL (via libtls), needed for https support if openssl, gnutls or mbedtls is not used [no]
+#  --enable-libv4l2         enable libv4l2/v4l-utils [no]
+#  --enable-libwavpack      enable wavpack encoding via libwavpack [no]
+#  --enable-libxavs         enable AVS encoding via xavs [no]
+#  --enable-libxavs2        enable AVS2 encoding via xavs2 [no]
+#  --enable-libzmq          enable message passing via libzmq [no]
+#  --enable-libzvbi         enable teletext support via libzvbi [no]
+#  --enable-lv2             enable LV2 audio filtering [no]
+#  --enable-decklink        enable Blackmagic DeckLink I/O support [no]
+#  --enable-mbedtls         enable mbedTLS, needed for https support if openssl, gnutls or libtls is not used [no]
+#  --enable-mediacodec      enable Android MediaCodec support [no]
+#  --enable-libmysofa       enable libmysofa, needed for sofalizer filter [no]
+#  --enable-openal          enable OpenAL 1.1 capture support [no]
+#  --enable-opencl          enable OpenCL processing [no]
+#  --enable-opengl          enable OpenGL rendering [no]
+#  --enable-pocketsphinx    enable PocketSphinx, needed for asr filter [no]
+#  --enable-vapoursynth     enable VapourSynth demuxer [no]
+#
+# ---------------
+# Deprecated
 #    --enable-avresample \
-#    --enable-libpulse \
 # ---------------
 elif [ "$platform" = "darwin" ]; then
   [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" \
@@ -959,7 +1239,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-2.9 \
+    --extra-version=Tec-3.0 \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \
@@ -997,6 +1277,68 @@ fi
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 make distclean
+}
+
+spd-say --rate -25 "Starting dependencies"
+yasm
+nasm
+#linuxPAM
+libcap
+ALSAlib
+GIFlib
+liblzma
+zlib125
+libjpegturbo
+libPNG
+zlib1211
+libID3tag
+libzstd
+libwebp
+libTIFF
+libwebpRB
+#utilmacros
+#xorgproto
+tcl
+tkinter
+libexpat
+Python
+libXML
+FreeType2
+FontConfig
+harfbuzz
+FreeType2RB
+openjpeg
+imlib2
+libcaca
+voamrwbenc
+opencoreamr
+OpenSSL
+libilbc
+Xvid
+x264
+x265
+fdkaac
+fribidi
+libass
+mp3lame
+libtwolame
+opus
+libpvx
+librtmp
+libsoxr
+libvidstab
+zimg
+libogg
+libflac
+libvorbis
+libspeex
+libsndfile
+libtheora
+spd-say --rate -25 "Starting test"
+#PulseAudio #Doesn't work yet
+spd-say --rate -25 "Dependencies built"
+ffmpeg
+
 date +%H:%M:%S
 spd-say --rate -25 "Build Complete"
 hash -r
