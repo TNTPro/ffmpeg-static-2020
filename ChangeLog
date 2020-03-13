@@ -1,3 +1,13 @@
+3.1 and 3.1s
+ Do we NEED to 'disable shared' on the libs we build, because if you install the static libs, often they install the shared libs also?
+ Does it just matter which build options we use (i.e. --pkg-config-flags=--static and --extra-ldexeflags=-static) in ffmpeg configure?
+ The 's' version tries to 'static' everything; the other does not.
+ - added asciidoc
+ - updated twolame to 0.4.0
+ - updated gifflib to git
+ - more organizing
+
+
 3.0
  - added libsndfile, flac, linux-pam, libcap and alsa-lib-1.2.1.2 to the build
  - more organizing
