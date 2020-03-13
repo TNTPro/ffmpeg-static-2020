@@ -3,11 +3,11 @@
 # Install needed updates
 sudo apt install build-essential g++ gcc pkg-config tar
 # Install needed tools
-sudo apt install autoconf automake cmake curl gawk git gperf libtool ragel texi2html xmlto libtool-bin autogen autopoint
+sudo apt install autoconf automake cmake curl gawk git gperf libtool ragel texi2html xmlto libtool-bin autogen autopoint yasm bison flex
 # Install dependencies (only add if you don't build them yourself)
-sudo apt install yasm libgdbm-dev libsqlite3-dev libreadline6-dev libncurses5-dev libjbig-dev libudev-dev libdbus-1-dev #libx11-dev libxext-dev
+sudo apt install w3m libxext-dev libgdbm-dev libsqlite3-dev libreadline6-dev libncurses5-dev libjbig-dev libudev-dev \
+  libdbus-1-dev libaudit-dev libcrack2-dev libdb-dev libselinux1-dev libxcrypt-dev # libx11-dev
 sudo apt install \
-  frei0r-plugins-dev \
   libbz2-dev \
   libcairo2-dev \
   libsdl1.2-dev \
@@ -19,6 +19,7 @@ sudo apt install \
 #  libass-dev \
 #  libcaca-dev \
 #  libfreetype6-dev \
+#  frei0r-plugins-dev \
 #  libglib2.0-dev \
 #  libopencore-amrnb-dev \
 #  libopencore-amrwb-dev \
