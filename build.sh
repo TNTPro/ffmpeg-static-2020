@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 3.2s
+# ffmpeg static build 3.3s
 
 set -e
 set -u
@@ -105,7 +105,7 @@ do_git_checkout() {
   # reset will be useless if they didn't git_get_latest but pretty fast so who cares...plus what if they changed branches? :)
   old_git_version=`git rev-parse HEAD`
   if [ -z $desired_branch ]; then
-    desired_branch="origin/master"
+    desired_branch="master"
   fi
   echo "doing git checkout $desired_branch" 
   git checkout "$desired_branch" || (git_hard_reset && git checkout "$desired_branch") || (git reset --hard "$desired_branch") || exit 1 # can't just use merge -f because might "think" patch files already applied when their changes have been lost, etc...
@@ -164,7 +164,7 @@ cd $BUILD_DIR
 #  "fc9e586751ff789b34b1f21d572d96af" \
 #  "http://www.tortall.net/projects/yasm/releases/"
 
-do_git_checkout https://github.com/asciidoc/asciidoc "$BUILD_DIR"/asciidoc-git origin/master
+do_git_checkout https://github.com/asciidoc/asciidoc "$BUILD_DIR"/asciidoc-git master
 
 [ $is_x86 -eq 1 ] && download \
   "nasm-2.14.tar.gz" \
@@ -255,14 +255,14 @@ download \
   "" \
   "f63bb92bde0b1583cb3cb344c12922e0" \
   "http://downloads.sourceforge.net/opencore-amr/vo-amrwbenc/"
-#do_git_checkout https://github.com/mstorsjo/vo-amrwbenc.git "$BUILD_DIR"/vo-amrwbenc-git origin/master
+#do_git_checkout https://github.com/mstorsjo/vo-amrwbenc.git "$BUILD_DIR"/vo-amrwbenc-git master
 
 download \
   "opencore-amr-0.1.3.tar.gz" \
   "" \
   "09d2c5dfb43a9f6e9fec8b1ae678e725" \
   "http://downloads.sourceforge.net/opencore-amr/opencore-amr/"
-#do_git_checkout https://github.com/BelledonneCommunications/opencore-amr.git "$BUILD_DIR"/opencore-amr-git origin/master
+#do_git_checkout https://github.com/BelledonneCommunications/opencore-amr.git "$BUILD_DIR"/opencore-amr-git master
 
 download \
   "v2.0.1.tar.gz" \
@@ -287,7 +287,7 @@ download \
   "libvpx-v1.8.2.tar.gz" \
   "6dbccca688886c66a216d7e445525bce" \
   "https://github.com/webmproject/libvpx/archive/"
-#do_git_checkout https://chromium.googlesource.com/webm/libvpx "$BUILD_DIR"/libvpx-git origin/master
+#do_git_checkout https://chromium.googlesource.com/webm/libvpx "$BUILD_DIR"/libvpx-git master
 
 download \
   "rtmpdump-2.3.tgz" \
@@ -300,6 +300,30 @@ download \
   "" \
   "3f16f4dcb35b471682d4321eda6f6c08" \
   "https://sourceforge.net/projects/soxr/files/"
+
+#download_and_unpack_file http://www.festvox.org/flite/packed/flite-2.0/flite-2.0.0-release.tar.bz2 $BUILD_DIR/flite-2.0.0-release
+do_git_checkout https://github.com/kubo/flite.git $BUILD_DIR/flite-git master
+
+do_git_checkout https://github.com/google/snappy.git $BUILD_DIR/snappy-git master
+
+download \
+  "vamp-plugin-sdk-v2.7.1.tar.gz" \
+  "vamp-plugin-sdk-vamp-plugin-sdk-v2.7.1.tar.gz" \
+  "0199b4cc0bc817566f6840c9ae8dc315" \
+  "https://github.com/c4dm/vamp-plugin-sdk/archive/"
+#download_and_unpack_file https://github.com/c4dm/vamp-plugin-sdk/archive/vamp-plugin-sdk-v2.7.1.tar.gz $BUILD_DIR/vamp-plugin-sdk-vamp-plugin-sdk-v2.7.1
+
+download \
+  "fftw-3.3.6-pl2.tar.gz" \
+  "" \
+  "927e481edbb32575397eb3d62535a856" \
+  "http://fftw.org/"
+#download_and_unpack_file http://fftw.org/fftw-3.3.6-pl2.tar.gz $BUILD_DIR/fftw-3.3.6-pl2
+
+do_git_checkout https://github.com/erikd/libsamplerate.git $BUILD_DIR/libsamplerate-git master
+
+do_git_checkout https://github.com/breakfastquay/rubberband.git $BUILD_DIR/rubberband-git master
+
 
 download \
   "v1.3.4.tar.gz" \
@@ -319,7 +343,7 @@ download \
   "03e967efb961f65a313459c5d0f4cbfb" \
   "https://github.com/xiph/vorbis/archive/"
 
-do_git_checkout https://github.com/xiph/speexdsp.git "$BUILD_DIR"/speexdsp-git origin/master
+do_git_checkout https://github.com/xiph/speexdsp.git "$BUILD_DIR"/speexdsp-git master
 
 download \
   "Speex-1.2.0.tar.gz" \
@@ -362,14 +386,14 @@ download \
 ##  "pulseaudio-master.tar.gz" \
 ##  "nil" \
 ##  "https://github.com/pulseaudio/pulseaudio/archive/"
-#do_git_checkout https://github.com/pulseaudio/pulseaudio "$BUILD_DIR"/pulseaudio-git origin/master
+#do_git_checkout https://github.com/pulseaudio/pulseaudio "$BUILD_DIR"/pulseaudio-git master
 
 #download \
 #  "giflib-5.2.1.tar.gz" \
 #  "" \
 #  "6f03aee4ebe54ac2cc1ab3e4b0a049e5" \
 #  "https://sourceforge.net/projects/giflib/files/"
-do_git_checkout https://git.code.sf.net/u/ffontaine35/giflib "$BUILD_DIR"/giflib-ffontaine35-git origin/master
+do_git_checkout https://git.code.sf.net/u/ffontaine35/giflib "$BUILD_DIR"/giflib-ffontaine35-git master
 
 download \
   "master.tar.gz" \
@@ -455,7 +479,7 @@ download \
   "libcaca-0.99.beta19.tar.gz" \
   "2e1ed59dc3cb2f69d3d98fd0e6a205b4" \
   "https://github.com/cacalabs/libcaca/archive/"
-#do_git_checkout https://github.com/cacalabs/libcaca.git "$BUILD_DIR"/libcaca-git origin/master
+#do_git_checkout https://github.com/cacalabs/libcaca.git "$BUILD_DIR"/libcaca-git master
 
 download \
   "master.tar.gz" \
@@ -463,7 +487,7 @@ download \
   "nil" \
   "https://github.com/TimothyGu/libilbc/archive/"
 
-do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git origin/master
+do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git master
 
 download \
   "xvidcore-1.3.5.tar.gz" \
@@ -500,7 +524,7 @@ download \
 #  "vid.stab-release-0.98b.tar.gz" \
 #  "299b2f4ccd1b94c274f6d94ed4f1c5b8" \
 #  "https://github.com/georgmartius/vid.stab/archive/"
-do_git_checkout https://github.com/georgmartius/vid.stab.git vid.stab-git origin/master
+do_git_checkout https://github.com/georgmartius/vid.stab.git vid.stab-git master
 
 download \
   "release-2.9.2.tar.gz" \
@@ -822,9 +846,77 @@ echo
 echo
 cd $BUILD_DIR/soxr-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DENABLE_STATIC_RUNTIME=1 -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DHAVE_WORDS_BIGENDIAN_EXITCODE=0 -DWITH_OPENMP=0 -DBUILD_TESTS=0 -DBUILD_EXAMPLES=0
+PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DWITH_OPENMP=0 -DBUILD_TESTS=0 -DBUILD_EXAMPLES=0
 make -j $jval
 make install
+}
+
+libflite() {
+echo
+/bin/echo -e "\e[93m*** Building libflite ***\e[39m"
+echo
+cd $BUILD_DIR/flite-*
+#      sed -i.bak "s|i386-mingw32-|$cross_prefix|" configure
+      #sed -i.bak "/define const/i\#include <windows.h>" tools/find_sts_main.c # Needed for x86_64? Untested.
+#      sed -i.bak "128,134d" main/Makefile # Library only. else fails with cannot copy bin/libflite or someodd
+#      sed -i.bak "s/cp -pd/cp -p/" main/Makefile # friendlier cp for OS X
+unset CFLAGS
+./configure --prefix=$TARGET_DIR --disable-shared # --with-audio=none
+#cd $BUILD_DIR/flite-*/src/utils 
+#make -j $jval
+#cd $BUILD_DIR/flite-*/tools 
+#make -j $jval
+#cd $BUILD_DIR/flite-*
+make -j $jval
+export CFLAGS="-I${TARGET_DIR}/include $LDFLAGS"
+make install
+}
+
+libsnappy() {
+echo
+/bin/echo -e "\e[93m*** Building libsnappy ***\e[39m"
+echo
+cd $BUILD_DIR/snappy-git
+cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DCMAKE_BUILD_TYPE=Release -DSNAPPY_BUILD_TESTS=OFF # extra params from deadsix27 and from new cMakeLists.txt content
+make -j $jval
+make install
+}
+
+vamp_plugin() {
+echo
+/bin/echo -e "\e[93m*** Building vamp_plugin ***\e[39m"
+echo
+cd $BUILD_DIR/vamp-plugin-sdk-*
+patch -i $PATCH_DIR/vamp-plugin-sdk-2.7.1_static-lib.diff
+#    if [[ ! -f configure.bak ]]; then # Fix for "'M_PI' was not declared in this scope" (see https://stackoverflow.com/a/29264536).
+#      sed -i.bak "s/c++98/gnu++98/" configure
+#    fi
+./configure --prefix=$TARGET_DIR --disable-programs
+make install-static # No need for 'do_make_install', because 'install-static' already has install-instructions.
+}
+
+fftw() {
+echo
+/bin/echo -e "\e[93m*** Building fftw ***\e[39m"
+echo
+cd $BUILD_DIR/fftw-*
+./configure --prefix=$TARGET_DIR --disable-shared --enable-static --disable-doc
+make -j $jval
+make install
+}
+
+libsamplerate() {
+# I think this didn't work with ubuntu 14.04 [too old automake or some odd] :|
+echo
+/bin/echo -e "\e[93m*** Building libsamplerate ***\e[39m"
+echo
+cd $BUILD_DIR/libsamplerate-git
+./autogen.sh
+./configure --prefix=$TARGET_DIR --disable-shared --enable-static
+make -j $jval
+make install
+  # but OS X can't use 0.1.9 :|
+  # rubberband can use this, but uses speex bundled by default [any difference? who knows!]
 }
 
 libogg(){
@@ -897,7 +989,7 @@ echo
 cd $BUILD_DIR/libsndfile-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 ./autogen.sh
-./configure --prefix=$TARGET_DIR --disable-shared --enable-experimental --disable-sqlite --disable-external-libs --disable-full-suite
+./configure --prefix=$TARGET_DIR --disable-shared --enable-experimental --disable-full-suite # --disable-sqlite --disable-external-libs
 make -j $jval
 make install
 if [ ! -f $TARGET_DIR/lib/libgsm.a ]; then
@@ -906,6 +998,17 @@ if [ ! -f $TARGET_DIR/lib/libgsm.a ]; then
 else
   echo "already installed GSM 6.10 ..."
 fi
+}
+
+librubberband() {
+echo
+/bin/echo -e "\e[93m*** Building librubberband ***\e[39m"
+echo
+cd $BUILD_DIR/rubberband-git
+patch -i $PATCH_DIR/rubberband_git_static-lib.diff # create install-static target
+./configure --prefix=$TARGET_DIR
+make install-static # AR=${cross_prefix}ar # No need for 'do_make_install', because 'install-static' already has install-instructions.
+    sed -i.bak 's/-lrubberband.*$/-lrubberband -lfftw3 -lsamplerate -lstdc++/' $TARGET_DIR/lib/pkgconfig/rubberband.pc
 }
 
 libtwolame(){
@@ -1148,7 +1251,7 @@ cd $BUILD_DIR/libcaca-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 sed -i 's/"$amvers" "<" "1.5"/"$amvers" "<" "1.05"/g' ./bootstrap
 ./bootstrap
-./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --enable-static --disable-shared --disable-doc --disable-slang --disable-ruby --disable-csharp --disable-java --disable-cxx --disable-ncurses --disable-x11 #--disable-python --disable-cocoa
+./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --enable-static --disable-shared --disable-slang --disable-doc --disable-ruby --disable-csharp --disable-java --disable-cxx --disable-ncurses --disable-x11 #--disable-python --disable-cocoa
 make -j $jval
 make install
 }
@@ -1289,7 +1392,7 @@ if [ "$platform" = "linux" ]; then
   PKG_CONFIG_PATH="$TARGET_DIR/lib/pkgconfig" ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.2s \
+    --extra-version=Tec-3.3s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-libs="-lpthread -lm -lz -ldl -lharfbuzz" \
@@ -1305,10 +1408,12 @@ if [ "$platform" = "linux" ]; then
   --disable-chromaprint \
     --enable-fontconfig \
     --enable-frei0r \
+    --enable-fontconfig \
     --enable-iconv \
     --enable-libass \
     --enable-libcaca \
     --enable-libfdk-aac \
+    --enable-libflite \
     --enable-libfreetype \
     --enable-libfribidi \
     --enable-libilbc \
@@ -1319,6 +1424,8 @@ if [ "$platform" = "linux" ]; then
     --enable-libopus \
   --disable-libpulse \
     --enable-librtmp \
+    --enable-librubberband \
+    --enable-libsnappy \
     --enable-libsoxr \
     --enable-libspeex \
     --enable-libtheora \
@@ -1362,7 +1469,6 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libdav1d        enable AV1 decoding via libdav1d [no]
 #  --enable-libdavs2        enable AVS2 decoding via libdavs2 [no]
 #  --enable-libdc1394       enable IIDC-1394 grabbing using libdc1394 and libraw1394 [no]
-#  --enable-libflite        enable flite (voice synthesis) support via libflite [no]
 #  --enable-libgme          enable Game Music Emu via libgme [no]
 #  --enable-libgsm          enable GSM de/encoding via libgsm [no]
 #  --enable-libiec61883     enable iec61883 via libiec61883 [no]
@@ -1376,10 +1482,8 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libopenmpt      enable decoding tracked files via libopenmpt [no]
 #  --enable-librav1e        enable AV1 encoding via rav1e [no] (unknown option?)
 #  --enable-librsvg         enable SVG rasterization via librsvg [no]
-#  --enable-librubberband   enable rubberband needed for rubberband filter [no]
 #  --enable-libshine        enable fixed-point MP3 encoding via libshine [no]
 #  --enable-libsmbclient    enable Samba protocol via libsmbclient [no]
-#  --enable-libsnappy       enable Snappy compression, needed for hap encoding [no]
 #  --enable-libsrt          enable Haivision SRT protocol via libsrt [no]
 #  --enable-libssh          enable SFTP protocol via libssh [no]
 #  --enable-libtensorflow   enable TensorFlow as a DNN module backend for DNN based filters like sr [no]
@@ -1412,7 +1516,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.2s \
+    --extra-version=Tec-3.3s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \
@@ -1426,6 +1530,7 @@ elif [ "$platform" = "darwin" ]; then
     --enable-libass \
     --enable-libfribidi \
     --enable-libfdk-aac \
+    --enable-libflite \
     --enable-libfreetype \
     --enable-libmp3lame \
     --enable-libopencore-amrnb \
@@ -1475,12 +1580,18 @@ opus
 libvpx
 librtmp
 libsoxr
+libflite #Doesn't work yet
+libsnappy
+vamp_plugin
+fftw
+libsamplerate
 libogg
 libflac
 libvorbis
 libspeexdsp
 libspeex
 libsndfile
+librubberband
 libtwolame
 libtheora
 #spd-say --rate -25 "Starting test"
