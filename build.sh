@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 3.0
+# ffmpeg static build 3.1
 
 set -e
 set -u
@@ -84,11 +84,14 @@ echo
 #this is our working directory
 cd $BUILD_DIR
 
-[ $is_x86 -eq 1 ] && download \
-  "yasm-1.3.0.tar.gz" \
-  "" \
-  "fc9e586751ff789b34b1f21d572d96af" \
-  "http://www.tortall.net/projects/yasm/releases/"
+#[ $is_x86 -eq 1 ] && download \
+#  "yasm-1.3.0.tar.gz" \
+#  "" \
+#  "fc9e586751ff789b34b1f21d572d96af" \
+#  "http://www.tortall.net/projects/yasm/releases/"
+
+rm -rf asciidoc-git
+git clone https://github.com/asciidoc/asciidoc asciidoc-git
 
 [ $is_x86 -eq 1 ] && download \
   "nasm-2.14.tar.gz" \
@@ -114,11 +117,13 @@ download \
   "82ddd3698469beec147e4f4a67134ea0" \
   "https://www.alsa-project.org/files/pub/lib/"
 
-download \
-  "giflib-5.2.1.tar.gz" \
-  "" \
-  "6f03aee4ebe54ac2cc1ab3e4b0a049e5" \
-  "https://sourceforge.net/projects/giflib/files/"
+#download \
+#  "giflib-5.2.1.tar.gz" \
+#  "" \
+#  "6f03aee4ebe54ac2cc1ab3e4b0a049e5" \
+#  "https://sourceforge.net/projects/giflib/files/"
+rm -rf giflib-ffontaine35
+git clone https://git.code.sf.net/u/ffontaine35/giflib giflib-ffontaine35
 
 download \
   "xz-5.2.4.tar.gz" \
@@ -329,12 +334,6 @@ download \
   "http://downloads.sourceforge.net/project/lame/lame/3.100"
 
 download \
-  "twolame-0.3.13.tar.gz" \
-  "" \
-  "4113d8aa80194459b45b83d4dbde8ddb" \
-  "https://netix.dl.sourceforge.net/project/twolame/twolame/0.3.13/"
-
-download \
   "v1.3.1.tar.gz" \
   "opus-1.3.1.tar.gz" \
   "b27f67923ffcbc8efb4ce7f29cbe3faf" \
@@ -401,6 +400,24 @@ download \
   "nil" \
   "https://github.com/erikd/libsndfile/archive/"
 
+#download \
+#  "twolame-0.3.13.tar.gz" \
+#  "" \
+#  "4113d8aa80194459b45b83d4dbde8ddb" \
+#  "https://github.com/njh/twolame/releases/download/0.3.13/"
+
+download \
+  "twolame-0.4.0.tar.gz" \
+  "" \
+  "400c164ed096c7aea82bcf8edcd3f6f9" \
+  "https://github.com/njh/twolame/releases/download/0.4.0/"
+
+#download \
+#  "master.tar.gz" \
+#  "twolame-master.tar.gz" \
+#  "nil" \
+#  "https://github.com/njh/twolame/archive/"
+
 download \
   "libtheora-1.1.1.tar.gz" \
   "" \
@@ -437,6 +454,18 @@ yasm(){
   fi
 }
 
+asciidoc(){
+echo
+/bin/echo -e "\e[93m*** Building asciidoc (Multi Dependency) ***\e[39m"
+echo
+cd $BUILD_DIR/asciidoc-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+autoconf
+./configure --prefix=$TARGET_DIR
+make -j $jval
+make install
+}
+
 nasm(){
   if [ $is_x86 -eq 1 ]; then
     echo
@@ -457,7 +486,7 @@ echo
 cd $BUILD_DIR/linux-pam*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 ./autogen.sh
-./configure --prefix=$TARGET_DIR --disable-doc
+./configure --prefix=$TARGET_DIR --disable-doc --enable-static
 make -j $jval
 make install
 }
@@ -469,22 +498,23 @@ echo
 echo
 cd $BUILD_DIR/libcap-master
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-sed -i '/FAKEROOT=$(DESTDIR)/a prefix=${TARGET_DIR}' ./Make.Rules
+#sed -i '/FAKEROOT=$(DESTDIR)/a prefix=${TARGET_DIR}' ./Make.Rules
 #./configure --prefix=$TARGET_DIR
 make -j $jval
-cd $BUILD_DIR/libcap-master/libcap
-cp libcap.a $TARGET_DIR/lib
-cp libcap.so.2.* $TARGET_DIR/lib
-ln -sf $TARGET_DIR/lib/libcap.so.2.* $TARGET_DIR/lib/libcap.so.2
-ln -sf $TARGET_DIR/lib/libcap.so.2 $TARGET_DIR/lib/libcap.so
-mkdir -p $TARGET_DIR/lib/pkgconfig
-cp libcap.pc -t $TARGET_DIR/lib/pkgconfig
-cp libpsx.pc -t $TARGET_DIR/lib/pkgconfig
-#cp cap_test $TARGET_DIR/sbin
-mkdir -p $TARGET_DIR/sbin
-cp _makenames $TARGET_DIR/sbin
-cp *.h $TARGET_DIR/include
-cp -R include/* $TARGET_DIR/include
+make RAISE_SETFCAP=no lib=lib prefix=$TARGET_DIR install
+#cd $BUILD_DIR/libcap-master/libcap
+#cp libcap.a $TARGET_DIR/lib
+#cp libcap.so.2.* $TARGET_DIR/lib
+#ln -sf $TARGET_DIR/lib/libcap.so.2.* $TARGET_DIR/lib/libcap.so.2
+#ln -sf $TARGET_DIR/lib/libcap.so.2 $TARGET_DIR/lib/libcap.so
+#mkdir -p $TARGET_DIR/lib/pkgconfig
+#cp libcap.pc -t $TARGET_DIR/lib/pkgconfig
+#cp libpsx.pc -t $TARGET_DIR/lib/pkgconfig
+##cp cap_test $TARGET_DIR/sbin
+#mkdir -p $TARGET_DIR/sbin
+#cp _makenames $TARGET_DIR/sbin
+#cp *.h $TARGET_DIR/include
+#cp -R include/* $TARGET_DIR/include
 }
 
 ALSAlib(){
@@ -492,7 +522,7 @@ echo
 /bin/echo -e "\e[93m*** ALSAlib ***\e[39m"
 echo
 cd $BUILD_DIR/alsa-lib-*
-./configure --prefix=$TARGET_DIR
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared
 make -j $jval
 make install
 }
@@ -504,10 +534,10 @@ echo
 cd $BUILD_DIR/giflib-*
 make -j $jval PREFIX=$TARGET_DIR
 make install PREFIX=$TARGET_DIR
-find doc \( -name Makefile\* -o -name \*.1 \
-         -o -name \*.xml \) -exec rm -v {} \;
-install -v -dm755 $TARGET_DIR/share/doc/giflib-5.2.1
-cp -v -R doc/* $TARGET_DIR/share/doc/giflib-5.2.1
+#find doc \( -name Makefile\* -o -name \*.1 \
+#         -o -name \*.xml \) -exec rm -v {} \;
+#install -v -dm755 $TARGET_DIR/share/doc/giflib-5.2.1
+#cp -v -R doc/* $TARGET_DIR/share/doc/giflib-5.2.1
 }
 
 liblzma(){
@@ -540,7 +570,7 @@ echo
 /bin/echo -e "\e[93m*** Building libjpeg-turbo ***\e[39m"
 echo
 cd $BUILD_DIR/libjpeg-turbo-*
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include
+PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include -DWITH_12BIT=1
 make -j $jval
 make install
 }
@@ -662,7 +692,7 @@ echo
 echo
 cd $BUILD_DIR/tcl*/unix
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./configure --prefix=$TARGET_DIR
+./configure --prefix=$TARGET_DIR # --enable-64bit
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 }
@@ -673,7 +703,7 @@ echo
 echo
 cd $BUILD_DIR/tk*/unix
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./configure --prefix=$TARGET_DIR --with-tcl=$BUILD_DIR/tcl8.6.10/unix --enable-static
+./configure --prefix=$TARGET_DIR --with-tcl=$BUILD_DIR/tcl8.6.10/unix --enable-static #--enable-64bit
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 }
@@ -924,17 +954,6 @@ make
 make install
 }
 
-libtwolame(){
-echo
-/bin/echo -e "\e[93m*** Building libtwolame ***\e[39m"
-echo
-cd $BUILD_DIR/twolame-*
-[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static
-make -j $jval
-make install
-}
-
 opus(){
 echo
 /bin/echo -e "\e[93m*** Building opus ***\e[39m"
@@ -954,7 +973,7 @@ echo
 echo
 cd $BUILD_DIR/libvpx*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-examples --disable-unit-tests --enable-pic
+[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-examples --disable-unit-tests --enable-pic --enable-vp9-highbitdepth --enable-vp8 --enable-vp9 --enable-better-hw-compatibility
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 }
@@ -1076,6 +1095,18 @@ make -j $jval
 make install
 }
 
+libtwolame(){
+echo
+/bin/echo -e "\e[93m*** Building libtwolame ***\e[39m"
+echo
+cd $BUILD_DIR/twolame-*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+#./autogen.sh --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static 
+./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static 
+make -j $jval
+make install
+}
+
 libtheora(){
 echo
 /bin/echo -e "\e[93mCompiling libtheora...\e[39m"
@@ -1115,10 +1146,10 @@ if [ "$platform" = "linux" ]; then
   PKG_CONFIG_PATH="$TARGET_DIR/lib/pkgconfig" ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.0 \
+    --extra-version=Tec-3.1 \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
-    --extra-libs="-lpthread -lm -lz" \
+    --extra-libs="-lpthread -lm -lz -ldl -lharfbuzz" \
     --extra-ldexeflags="-static" \
     --bindir="$BIN_DIR" \
     --enable-pic \
@@ -1126,7 +1157,7 @@ if [ "$platform" = "linux" ]; then
     --enable-gpl \
     --enable-nonfree \
     --enable-version3 \
-  --disable-alsa \
+  --enable-alsa \
     --enable-bzlib \
   --disable-chromaprint \
     --enable-fontconfig \
@@ -1192,7 +1223,7 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libgme          enable Game Music Emu via libgme [no]
 #  --enable-libgsm          enable GSM de/encoding via libgsm [no]
 #  --enable-libiec61883     enable iec61883 via libiec61883 [no]
-#    --enable-libilbc         enable iLBC de/encoding via libilbc [no]
+#  --enable-libilbc         enable iLBC de/encoding via libilbc [no]
 #  --enable-libjack         enable JACK audio sound server [no]
 #  --enable-libklvanc       enable Kernel Labs VANC processing [no]
 #  --enable-libkvazaar      enable HEVC encoding via libkvazaar [no]
@@ -1201,7 +1232,7 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libopencv       enable video filtering via libopencv [no]
 #  --enable-libopenh264     enable H.264 encoding via OpenH264 [no]
 #  --enable-libopenmpt      enable decoding tracked files via libopenmpt [no]
-#  --enable-librav1e        enable AV1 encoding via rav1e [no]
+#  --enable-librav1e        enable AV1 encoding via rav1e [no] (unknown option?)
 #  --enable-librsvg         enable SVG rasterization via librsvg [no]
 #  --enable-librubberband   enable rubberband needed for rubberband filter [no]
 #  --enable-libshine        enable fixed-point MP3 encoding via libshine [no]
@@ -1221,7 +1252,7 @@ if [ "$platform" = "linux" ]; then
 #  --enable-lv2             enable LV2 audio filtering [no]
 #  --enable-decklink        enable Blackmagic DeckLink I/O support [no]
 #  --enable-mbedtls         enable mbedTLS, needed for https support if openssl, gnutls or libtls is not used [no]
-#  --enable-mediacodec      enable Android MediaCodec support [no]
+#  --enable-mediacodec      enable Android MediaCodec support [no] (requires --enable-jni)
 #  --enable-libmysofa       enable libmysofa, needed for sofalizer filter [no]
 #  --enable-openal          enable OpenAL 1.1 capture support [no]
 #  --enable-opencl          enable OpenCL processing [no]
@@ -1239,7 +1270,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.0 \
+    --extra-version=Tec-3.1 \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \
@@ -1280,7 +1311,8 @@ make distclean
 }
 
 spd-say --rate -25 "Starting dependencies"
-yasm
+#yasm
+asciidoc
 nasm
 #linuxPAM
 libcap
@@ -1321,7 +1353,6 @@ fdkaac
 fribidi
 libass
 mp3lame
-libtwolame
 opus
 libpvx
 librtmp
@@ -1333,8 +1364,9 @@ libflac
 libvorbis
 libspeex
 libsndfile
+libtwolame
 libtheora
-spd-say --rate -25 "Starting test"
+#spd-say --rate -25 "Starting test"
 #PulseAudio #Doesn't work yet
 spd-say --rate -25 "Dependencies built"
 ffmpeg
