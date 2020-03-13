@@ -1,3 +1,9 @@
+3.2 and 3.2s
+ - added functions do_git_checkout, git_hard_reset and apply_patch (used from https://github.com/rdp/ffmpeg-windows-build-helpers)
+ - added frei0r to the build
+ - fix some bugs
+ - more organizing
+
 3.1 and 3.1s
  Do we NEED to 'disable shared' on the libs we build, because if you install the static libs, often they install the shared libs also?
  Does it just matter which build options we use (i.e. --pkg-config-flags=--static and --extra-ldexeflags=-static) in ffmpeg configure?
