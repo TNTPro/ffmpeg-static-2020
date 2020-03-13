@@ -1,3 +1,6 @@
+3.3s
+ - added libflite, libsnappy, vamp-plugin-sdk-v2.7.1, fftw-3.3.6-pl2, libsamplerate, rubberband
+
 3.2 and 3.2s
  - added functions do_git_checkout, git_hard_reset and apply_patch (used from https://github.com/rdp/ffmpeg-windows-build-helpers)
  - added frei0r to the build
