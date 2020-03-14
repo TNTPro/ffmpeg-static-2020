@@ -1794,7 +1794,7 @@ zimg
 
 dp_time=$(date +%H:%M)
 echo $dp_time
-#deps
+deps
 adp_time=$(date +%H:%M)
 echo $adp_time
 adeps
