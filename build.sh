@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 3.6s
+# ffmpeg static build 3.7s
 
 set -e
 set -u
@@ -276,6 +276,8 @@ download \
 #  "b3fb85fd479c0bf950c626ef80cacb57" \
 #  "https://www.python.org/ftp/python/3.8.1/"
 
+do_git_checkout https://git.videolan.org/git/ffmpeg/nv-codec-headers.git "$BUILD_DIR"/nv-codec-headers-git master
+
 # there's a 2.58 but guess I'd need to use meson for that
 download \
   "glib-2.56.3.tar.xz" \
@@ -288,6 +290,8 @@ do_git_checkout https://git.savannah.gnu.org/git/libcdio.git "$BUILD_DIR"/libcdi
 do_git_checkout https://github.com/rocky/libcdio-paranoia.git "$BUILD_DIR"/libcdio-paranoia-git master
 
 do_git_checkout https://github.com/rocky/vcdimager.git "$BUILD_DIR"/vcdimager-git master
+
+do_git_checkout https://code.videolan.org/videolan/libbluray.git "$BUILD_DIR"/libbluray-git master
 
 do_git_checkout https://github.com/hoene/libmysofa.git "$BUILD_DIR"/libmysofa-git v1.0
 
@@ -646,10 +650,10 @@ echo
 /bin/echo -e "\e[93m*** Extracting cmake ***\e[39m"
 echo
 cd $DOWNLOAD_DIR/
-tar --wildcards --strip-components 1 --directory=../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/bin/*
-tar --wildcards --strip-components 1 --directory=../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/doc/*
-tar --wildcards --strip-components 1 --directory=../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/man/*
-tar --wildcards --strip-components 1 --directory=../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/share/*
+tar --wildcards --strip-components 1 --directory=$TARGET_DIR/../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/bin/*
+tar --wildcards --strip-components 1 --directory=$TARGET_DIR/../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/doc/*
+tar --wildcards --strip-components 1 --directory=$TARGET_DIR/../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/man/*
+tar --wildcards --strip-components 1 --directory=$TARGET_DIR/../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/share/*
 }
 
 ninja_extract(){
@@ -695,8 +699,8 @@ sed -i 's/shared/static/' ./Make.Rules
 #./configure --prefix=$TARGET_DIR
 make -j $jval
 cd $BUILD_DIR/libcap-master/libcap
-mkdir -p $TARGET_DIR/lib/pkgconfig
-mkdir -p $TARGET_DIR/include
+mkdir -pv $TARGET_DIR/lib/pkgconfig
+mkdir -pv $TARGET_DIR/include
 cp libcap.a $TARGET_DIR/lib
 cp libcap.so.2.* $TARGET_DIR/lib
 ln -sf $TARGET_DIR/lib/libcap.so.2.* $TARGET_DIR/lib/libcap.so.2
@@ -704,7 +708,7 @@ ln -sf $TARGET_DIR/lib/libcap.so.2 $TARGET_DIR/lib/libcap.so
 cp libcap.pc -t $TARGET_DIR/lib/pkgconfig
 cp libpsx.pc -t $TARGET_DIR/lib/pkgconfig
 #cp cap_test $TARGET_DIR/sbin
-mkdir -p $TARGET_DIR/sbin
+mkdir -pv $TARGET_DIR/sbin
 cp _makenames $TARGET_DIR/sbin
 cp *.h $TARGET_DIR/include
 cp -R include/* $TARGET_DIR/include
@@ -715,6 +719,7 @@ echo
 /bin/echo -e "\e[93m*** Building xz to get liblzma ( Dependency) ***\e[39m"
 echo
 cd $BUILD_DIR/xz-*
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --disable-xz --disable-xzdec --disable-lzmadec --disable-lzmainfo --disable-scripts --disable-doc #--disable-nls
 make -j $jval
 make install
@@ -758,7 +763,7 @@ echo
 echo
 cd $BUILD_DIR/zstd-*
 cd build/cmake
-mkdir builddir
+mkdir -pv builddir
 cd builddir
 cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DZSTD_LEGACY_SUPPORT=ON -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DZSTD_BUILD_SHARED:BOOL=OFF -DZSTD_LZMA_SUPPORT:BOOL=ON -DZSTD_ZLIB_SUPPORT:BOOL=ON ..
 #cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include
@@ -826,6 +831,14 @@ PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 }
 
+build_nv_headers() {
+echo
+/bin/echo -e "\e[93m*** Building nv_headers ***\e[39m"
+echo
+cd $BUILD_DIR/nv-codec-headers-git
+make install "PREFIX=$TARGET_DIR" # just copies in headers
+}
+
 glib() {
 echo
 /bin/echo -e "\e[93m*** Building glib ***\e[39m"
@@ -844,7 +857,11 @@ cd $BUILD_DIR/glib-*
 #export ZLIB_LIBS="-L$TARGET_DIR/lib"
 #export LIBFFI_CFLAGS="-I$TARGET_DIR/include"
 #export LIBFFI_LIBS="-L$TARGET_DIR/lib"
-./configure --prefix=$TARGET_DIR --enable-static --disable-shared --with-pcre=internal # too lazy for pcre :) XXX
+if [ ! -f configure ]; then
+  ./autogen.sh --prefix=$TARGET_DIR --enable-static --disable-shared --with-pcre=internal # too lazy for pcre :) XXX
+else
+  ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --with-pcre=internal # too lazy for pcre :) XXX
+fi
 make -j $jval
 make install
 }
@@ -904,6 +921,16 @@ make -j $(nproc)
 make install
 }
 
+# needs libxml2, freetype, fontconfig, (ANT & javac for compiling OR --disable-bdjava-jar)
+build_libbluray() {
+cd "$BUILD_DIR"/libbluray-git
+git submodule update --init
+./bootstrap
+./configure --prefix=$TARGET_DIR --disable-shared --disable-bdjava-jar
+make -j $(nproc)
+make install
+}
+
 libmysofa() {
 echo
 /bin/echo -e "\e[93m***  Building libmysofa ***\e[39m"
@@ -920,6 +947,13 @@ echo
 /bin/echo -e "\e[93m***  Building ALSAlib ***\e[39m"
 echo
 cd $BUILD_DIR/alsa-lib-*
+if [ ! -f configure ]; then
+  libtoolize --force --copy --automake
+  aclocal
+  autoheader
+  automake --foreign --copy --add-missing
+  autoconf
+fi
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
 make -j $jval
 make install
@@ -942,6 +976,7 @@ echo
 echo
 cd $BUILD_DIR/opencore-amr*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+[ ! -f configure ] && autoreconf -fiv
 ./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static
 make -j $jval
 make install
@@ -953,7 +988,7 @@ echo
 echo
 cd $BUILD_DIR/fdk-aac*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-autoreconf -fiv
+[ ! -f configure ] && autoreconf -fiv
 [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --disable-shared
 make -j $jval
 make install
@@ -978,7 +1013,7 @@ echo
 echo
 cd $BUILD_DIR/opus*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --enable-intrinsics --disable-shared
 make -j $jval
 make install
@@ -1325,7 +1360,7 @@ echo
 echo
 cd $BUILD_DIR/xorgproto-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-mkdir build
+mkdir -pv build
 cd build/
 meson --prefix=$TARGET_DIR .. && ninja
 ninja install
@@ -1510,9 +1545,9 @@ echo
 /bin/echo -e "\e[93m*** Building libaom ***\e[39m"
 echo
 cd $BUILD_DIR/aom-*
-mkdir -p aom_build
+mkdir -pv aom_build
 cd aom_build
-cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS=0 -DENABLE_STATIC_RUNTIME=1 ..
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS=0 ..
 make -j $jval
 make install
 }
@@ -1627,7 +1662,6 @@ make install
 }
 
 ffmpeg(){
-# FFMpeg
 echo
 /bin/echo -e "\e[93m*** Building FFmpeg ***\e[39m"
 date +%H:%M:%S
@@ -1640,7 +1674,7 @@ if [ "$platform" = "linux" ]; then
   PKG_CONFIG_PATH="$TARGET_DIR/lib/pkgconfig" ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.6s \
+    --extra-version=Tec-3.7s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-libs="-lpthread -lm -lz -ldl -lharfbuzz" \
@@ -1659,6 +1693,7 @@ if [ "$platform" = "linux" ]; then
     --enable-iconv \
     --enable-libaom  \
     --enable-libass \
+    --enable-libbluray \
     --enable-libcaca \
     --enable-libcdio \
     --enable-libdav1d \
@@ -1698,6 +1733,7 @@ if [ "$platform" = "linux" ]; then
     --enable-libxvid \
     --enable-libzimg \
     --enable-lzma \
+    --enable-nvenc \
     --enable-openssl \
   --disable-sndio \
   --disable-sdl2 \
@@ -1713,7 +1749,6 @@ if [ "$platform" = "linux" ]; then
 #  --enable-gnutls          enable gnutls, needed for https support if openssl, libtls or mbedtls is not used [no]
 #  --enable-ladspa          enable LADSPA audio filtering [no]
 #  --enable-libaribb24      enable ARIB text and caption decoding via libaribb24 [no]
-#  --enable-libbluray       enable BluRay reading using libbluray [no]
 #  --enable-libbs2b         enable bs2b DSP library [no]
 #  --enable-libcelt         enable CELT decoding via libcelt [no]
 #  --enable-libcodec2       enable codec2 en/decoding using libcodec2 [no]
@@ -1761,7 +1796,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.6s \
+    --extra-version=Tec-3.7s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \
@@ -1819,13 +1854,13 @@ libzstd
 #tkinter #python dependency
 libexpat
 #Python
+build_nv_headers
 glib
 OpenSSL # Should be before Python. Wants ZLIB
 build_libcdio
 build_libcdio_paranoia
 build_vcdimager
 rebuild_libcdio
-rebuild_libcdio_paranoia
 }
 
 adeps(){
@@ -1842,10 +1877,10 @@ librtmp # wants openssl
 libsoxr
 libflite
 libsnappy # wants zlib
-vamp_plugin
-fftw
-libogg
-libflac # wants ogg
+vamp_plugin #
+fftw # wants f77 compiler
+libogg # 
+libflac # wants ogg, XMMS
 libvorbis # needs ogg
 libspeexdsp
 libspeex # needs libspeexdsp
@@ -1853,51 +1888,53 @@ libsndfile # wants flac, ogg, speex, vorbis, opus, sqlite3, alsa
 libsamplerate # wants libsndfile, alsa, fftw3
 librubberband # wants libsndfile, fftw, samplerate
 libtwolame # wants libsndfile
-libtheora # wants ogg, vorbis, png
+libtheora # needs ogg, wants vorbis, png
 #PulseAudio #Doesn't work yet
 #sdl1
 }
 
 pdeps(){
 spd-say --rate -25 "Starting picture dependencies"
-GIFlib
-libjpegturbo
-libPNG
-libID3tag
-libwebp
-libTIFF
-libwebpRB
+GIFlib #
+libjpegturbo #
+libPNG #wants zlib
+libID3tag #wants zlib,
+libwebp #wants giflib, jpeg, libtiff, wic, sdl, png, glut, opengl
+libTIFF #wants lzw, zlib, jpeg, jbig, lzma, zstd, webp, glut, opengl
+libwebpRB #wants giflib, jpeg, libtiff, wic, sdl, png, glut, opengl
 #utilmacros
 #xorgproto
-libXML
-FreeType2
-FontConfig
-harfbuzz
+libXML #wants iconv, icu, lzma, zlib
+FreeType2 #wants harfbuzz, zlib,linpng,bzip2
+FontConfig #wants iconv, freetype2, expat, XML, jsonc
+harfbuzz #wants glib, icu, freetype2, cairo, fontconfig, graphite2, coretext, directwrite, GDI, uniscribe
 #FreeType2RB
-fribidi
-libass
-openjpeg
-lensfun
+fribidi #
+libass #wants nasm, iconv, FreeType2, fribidi, FontConfig, coretext, directwrite, harfbuzz
+openjpeg #
+lensfun #wants glib
 }
 
 tdeps(){
-libleptonica
-libtesseract
-imlib2
-libcaca
-libilbc
-frei0r
+spd-say --rate -25 "Starting text dependencies"
+libleptonica #wants zlib, png, jpeg, giflib, libtiff, libwebp
+libtesseract #wants opencl, tiff, asciidoc, libleptonica, icu, pango, cairo
+imlib2 #wants freetype, x-libs, jpeg, png, webp, tiff, giflib, zlib, bz2, id3tag
+libcaca #wants zlib, slang, opencl, ftgl, imlib2, pangoft2, cppunit, zzuf
+libilbc #
+frei0r # opencv, gavl, cairo
 }
 
 vdeps(){
 spd-say --rate -25 "Starting video dependencies"
-libaom
-dav1d
-Xvid
-x264
-x265
-libvidstab
-zimg
+build_libbluray #wants libxml2, freetype2, fontconfig
+libaom #
+dav1d #wants nasm, meson, ninja
+Xvid #wants yasm,
+x264 #
+x265 #wants numa, nasm
+libvidstab #
+zimg #
 #sdl2
 }
 
