@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 3.4s
+# ffmpeg static build 3.5s
 
 set -e
 set -u
@@ -180,7 +180,26 @@ do_git_checkout https://github.com/asciidoc/asciidoc "$BUILD_DIR"/asciidoc-git m
   "bc1cdaa06fc522eefa35c4ba881348f5" \
   "http://www.nasm.us/pub/nasm/releasebuilds/2.14/"
 
+do_git_checkout https://github.com/mesonbuild/meson.git "$BUILD_DIR"/meson-git master
+
 do_git_checkout https://github.com/libffi/libffi.git "$BUILD_DIR"/libffi-git master
+
+download \
+  "cmake-3.16.4-Linux-x86_64.tar.gz" \
+  "" \
+  "d3ac45c550a1b6799ff370cdb6b7bbe0" \
+  "https://github.com/Kitware/CMake/releases/download/v3.16.4/"
+#mv -f "$BUILD_DIR/cmake-3.16.4-Linux-x86_64/bin/c*" "$BUILD_DIR/../bin/"
+#mv -f "$BUILD_DIR/cmake-3.16.4-Linux-x86_64/doc" "$BUILD_DIR/../"
+#mv -f "$BUILD_DIR/cmake-3.16.4-Linux-x86_64/man" "$BUILD_DIR/../"
+#mv -f "$BUILD_DIR/cmake-3.16.4-Linux-x86_64/share" "$BUILD_DIR/../"
+
+wget -L -P "$DOWNLOAD_DIR" https://github.com/ninja-build/ninja/releases/download/v1.10.0/ninja-linux.zip
+#download \
+#  "ninja-linux.zip" \
+#  "" \
+#  "e40d1b8506145b333f8a1c4f3447dcef" \
+#  "https://github.com/ninja-build/ninja/releases/download/v1.10.0/"
 
 #download \
 #  "master.tar.gz" \
@@ -519,6 +538,10 @@ download \
 
 do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git master
 
+do_git_checkout https://aomedia.googlesource.com/aom "$BUILD_DIR"/aom-git master
+
+do_git_checkout https://code.videolan.org/videolan/dav1d.git "$BUILD_DIR"/libdav1d-git master
+
 download \
   "xvidcore-1.3.5.tar.gz" \
   "" \
@@ -608,6 +631,25 @@ nasm(){
     make -j $jval
     make install
   fi
+}
+
+cmake_extract(){
+echo
+/bin/echo -e "\e[93m*** Extracting cmake ***\e[39m"
+echo
+cd $DOWNLOAD_DIR/
+tar --wildcards --strip-components 1 --directory=../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/bin/*
+tar --wildcards --strip-components 1 --directory=../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/doc/*
+tar --wildcards --strip-components 1 --directory=../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/man/*
+tar --wildcards --strip-components 1 --directory=../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/share/*
+}
+
+ninja_extract(){
+echo
+/bin/echo -e "\e[93m*** Extracting ninja ***\e[39m"
+echo
+cd $DOWNLOAD_DIR/
+unzip -o -d ../bin ninja-linux.zip
 }
 
 libffi(){
@@ -806,7 +848,6 @@ echo
 cd $BUILD_DIR/libmysofa-*
 PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_TESTS=0
 apply_patch file://$PATCH_DIR/libmysofa.patch -p1
-#patch -p1 -i $PATCH_DIR/libmysofa.patch
 make -j $jval
 make install
 }
@@ -958,7 +999,6 @@ echo
 echo
 cd $BUILD_DIR/vamp-plugin-sdk-*
 apply_patch file://$PATCH_DIR/vamp-plugin-sdk-2.7.1_static-lib.diff -p0
-#patch -i $PATCH_DIR/vamp-plugin-sdk-2.7.1_static-lib.diff
 #    if [[ ! -f configure.bak ]]; then # Fix for "'M_PI' was not declared in this scope" (see https://stackoverflow.com/a/29264536).
 #      sed -i.bak "s/c++98/gnu++98/" configure
 #    fi
@@ -1077,7 +1117,6 @@ echo
 echo
 cd $BUILD_DIR/rubberband-git
 apply_patch file://$PATCH_DIR/rubberband_git_static-lib.diff -p0 # create install-static target
-#patch -i $PATCH_DIR/rubberband_git_static-lib.diff
 ./configure --prefix=$TARGET_DIR
 make install-static # AR=${cross_prefix}ar # No need for 'do_make_install', because 'install-static' already has install-instructions.
     sed -i.bak 's/-lrubberband.*$/-lrubberband -lfftw3 -lsamplerate -lstdc++/' $TARGET_DIR/lib/pkgconfig/rubberband.pc
@@ -1186,27 +1225,6 @@ echo
 echo
 mv "$TARGET_DIR/lib/pkgconfig/libzstd.pc" "$TARGET_DIR/lib/pkgconfig/libzstd.pc.bak"
 mv "$TARGET_DIR/include/zstd.h" "$TARGET_DIR/include/zstd.h.bak"
-#rm -f "$TARGET_DIR/lib/pkgconfig/libzstd.pc" # remove zstd
-#rm -f "$TARGET_DIR/include/zstd.h"
-#rm -f "$TARGET_DIR/include/zbuff.h"
-#rm -f "$TARGET_DIR/include/zdict.h"
-#rm -f "$TARGET_DIR/include/cover.h"
-#rm -f "$TARGET_DIR/include/zstd_errors.h"
-#rm -f "$TARGET_DIR/lib/libzstd.a"
-#rm -f "$TARGET_DIR/lib/cmake/zstd/zstdConfig.cmake"
-#rm -f "$TARGET_DIR/lib/cmake/zstd/zstdExports.cmake"
-#rm -f "$TARGET_DIR/lib/cmake/zstd/zstdExports-release.cmake"
-#rm -f "$TARGET_DIR/bin/zstd"
-#rm -f "$TARGET_DIR/bin/zstdcat"
-#rm -f "$TARGET_DIR/bin/unzstd"
-#rm -f "$TARGET_DIR/bin/zstdgrep"
-#rm -f "$TARGET_DIR/bin/zstdless"
-#rm -f "$TARGET_DIR/share/man/man1/zstd.1"
-#rm -f "$TARGET_DIR/share/man/man1/zstdcat.1"
-#rm -f "$TARGET_DIR/share/man/man1/unzstd.1"
-#rm -f "$TARGET_DIR/share/man/man1/zstdgrep.1"
-#rm -f "$TARGET_DIR/share/man/man1/zstdless.1"
-#rm -f "$TARGET_DIR/bin/zstdmt"
 cd $BUILD_DIR/tiff-*
 ./configure --prefix=$TARGET_DIR --disable-shared
 make -j $jval
@@ -1424,6 +1442,31 @@ make -j $jval
 make install
 }
 
+libaom() {
+echo
+/bin/echo -e "\e[93m*** Building libaom ***\e[39m"
+echo
+cd $BUILD_DIR/aom-*
+mkdir -p aom_build
+cd aom_build
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS=0 -DENABLE_STATIC_RUNTIME=1 ..
+make -j $jval
+make install
+}
+
+dav1d() {
+echo
+/bin/echo -e "\e[93m*** Building dav1d ***\e[39m"
+echo
+cd $BUILD_DIR/libdav1d-*
+mkdir -pv build
+cd build/
+PATH="$BIN_DIR:$PATH" ${BUILD_DIR}/meson-git/meson.py --prefix=${TARGET_DIR} --libdir=${TARGET_DIR}/lib --buildtype=release --strip --default-library=static ..
+ninja -j 1
+ninja install
+#cp build/src/libdav1d.a $TARGET_DIR/lib || exit 1 # avoid 'run ranlib' weird failure, possibly older meson's https://github.com/mesonbuild/meson/issues/4138 :|
+}
+
 Xvid(){
 echo
 /bin/echo -e "\e[93m*** Building Xvid ***\e[39m"
@@ -1433,7 +1476,6 @@ cd $BUILD_DIR/xvidcore/build/generic
 #sed -i '/AC_MSG_CHECKING(for platform specific LDFLAGS\/CFLAGS)/{n;s/.*/SPECIFIC_LDFLAGS="-static"/}' ./configure.in
 #sed -i '/SPECIFIC_LDFLAGS="-static"/{n;s/.*/SPECIFIC_CFLAGS="-static"/}' ./configure.in
 apply_patch file://$PATCH_DIR/xvidcore-1.3.4_static-lib.diff -p0
-#patch -i $PATCH_DIR/xvidcore-1.3.4_static-lib.diff
 PATH="$BIN_DIR:$PATH" ./bootstrap.sh
 PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-shared
 PATH="$BIN_DIR:$PATH" make -j $jval
@@ -1535,7 +1577,7 @@ if [ "$platform" = "linux" ]; then
   PKG_CONFIG_PATH="$TARGET_DIR/lib/pkgconfig" ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.4s \
+    --extra-version=Tec-3.5s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-libs="-lpthread -lm -lz -ldl -lharfbuzz" \
@@ -1552,8 +1594,10 @@ if [ "$platform" = "linux" ]; then
     --enable-fontconfig \
     --enable-frei0r \
     --enable-iconv \
+    --enable-libaom  \
     --enable-libass \
     --enable-libcaca \
+    --enable-libdav1d \
     --enable-libfdk-aac \
     --enable-libflite \
     --enable-libfreetype \
@@ -1604,14 +1648,12 @@ if [ "$platform" = "linux" ]; then
 #
 #  --enable-gnutls          enable gnutls, needed for https support if openssl, libtls or mbedtls is not used [no]
 #  --enable-ladspa          enable LADSPA audio filtering [no]
-#  --enable-libaom          enable AV1 video encoding/decoding via libaom [no]
 #  --enable-libaribb24      enable ARIB text and caption decoding via libaribb24 [no]
 #  --enable-libbluray       enable BluRay reading using libbluray [no]
 #  --enable-libbs2b         enable bs2b DSP library [no]
 #  --enable-libcelt         enable CELT decoding via libcelt [no]
 #  --enable-libcdio         enable audio CD grabbing with libcdio [no]
 #  --enable-libcodec2       enable codec2 en/decoding using libcodec2 [no]
-#  --enable-libdav1d        enable AV1 decoding via libdav1d [no]
 #  --enable-libdavs2        enable AVS2 decoding via libdavs2 [no]
 #  --enable-libdc1394       enable IIDC-1394 grabbing using libdc1394 and libraw1394 [no]
 #  --enable-libgme          enable Game Music Emu via libgme [no]
@@ -1620,7 +1662,6 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libjack         enable JACK audio sound server [no]
 #  --enable-libklvanc       enable Kernel Labs VANC processing [no]
 #  --enable-libkvazaar      enable HEVC encoding via libkvazaar [no]
-#    --enable-liblensfun      enable lensfun lens correction [no]
 #  --enable-libmodplug      enable ModPlug via libmodplug [no]
 #  --enable-libopencv       enable video filtering via libopencv [no]
 #  --enable-libopenh264     enable H.264 encoding via OpenH264 [no]
@@ -1632,7 +1673,6 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libsrt          enable Haivision SRT protocol via libsrt [no]
 #  --enable-libssh          enable SFTP protocol via libssh [no]
 #  --enable-libtensorflow   enable TensorFlow as a DNN module backend for DNN based filters like sr [no]
-#    --enable-libtesseract    enable Tesseract, needed for ocr filter [no]
 #  --enable-libtls          enable LibreSSL (via libtls), needed for https support if openssl, gnutls or mbedtls is not used [no]
 #  --enable-libv4l2         enable libv4l2/v4l-utils [no]
 #  --enable-libwavpack      enable wavpack encoding via libwavpack [no]
@@ -1644,7 +1684,6 @@ if [ "$platform" = "linux" ]; then
 #  --enable-decklink        enable Blackmagic DeckLink I/O support [no]
 #  --enable-mbedtls         enable mbedTLS, needed for https support if openssl, gnutls or libtls is not used [no]
 #  --enable-mediacodec      enable Android MediaCodec support [no] (requires --enable-jni)
-#  --enable-libmysofa       enable libmysofa, needed for sofalizer filter [no]
 #  --enable-openal          enable OpenAL 1.1 capture support [no]
 #  --enable-opencl          enable OpenCL processing [no]
 #  --enable-opengl          enable OpenGL rendering [no]
@@ -1661,7 +1700,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.4s \
+    --extra-version=Tec-3.5s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \
@@ -1707,6 +1746,8 @@ spd-say --rate -25 "Starting dependencies"
 #yasm
 asciidoc
 nasm
+cmake_extract
+ninja_extract
 libffi
 #linuxPAM
 #libcap
@@ -1784,6 +1825,8 @@ frei0r
 
 vdeps(){
 spd-say --rate -25 "Starting video dependencies"
+libaom
+dav1d
 Xvid
 x264
 x265
@@ -1793,22 +1836,34 @@ zimg
 }
 
 dp_time=$(date +%H:%M)
+echo
 echo $dp_time
 deps
+
 adp_time=$(date +%H:%M)
+echo
 echo $adp_time
 adeps
+
 pdp_time=$(date +%H:%M)
+echo
 echo $pdp_time
 pdeps
+
 tdp_time=$(date +%H:%M)
+echo
 echo $tdp_time
 tdeps
+
 vdp_time=$(date +%H:%M)
+echo
 echo $vdp_time
 vdeps
+
 spd-say --rate -25 "Dependencies built"
+
 ff_time=$(date +%H:%M)
+echo
 echo $ff_time
 ffmpeg
 
