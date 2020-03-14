@@ -1,3 +1,6 @@
+3.5s
+ - added libaom, libdav1d
+
 3.4s
  - added libffi, glib-2.56.3, libmysofa, leptonica, lensfun and tesseract
  - update versions
