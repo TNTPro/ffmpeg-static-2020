@@ -1,11 +1,12 @@
 #!/bin/sh
 
-# ffmpeg static build 3.3s
+# ffmpeg static build 3.4s
 
 set -e
 set -u
 echo
-date +%H:%M:%S
+start_time=$(date +%H:%M)
+echo $start_time
 
 jflag=
 jval=$(nproc)
@@ -151,9 +152,16 @@ apply_patch() {
   fi
 }
 
+echo_and_exit() {
+  echo "failure, exiting: $1"
+  exit 1
+}
+
 echo
 /bin/echo -e "\e[93m#### FFmpeg static build ####\e[39m"
 echo
+dl_time=$(date +%H:%M)
+echo $dl_time
 
 #this is our working directory
 cd $BUILD_DIR
@@ -171,6 +179,8 @@ do_git_checkout https://github.com/asciidoc/asciidoc "$BUILD_DIR"/asciidoc-git m
   "" \
   "bc1cdaa06fc522eefa35c4ba881348f5" \
   "http://www.nasm.us/pub/nasm/releasebuilds/2.14/"
+
+do_git_checkout https://github.com/libffi/libffi.git "$BUILD_DIR"/libffi-git master
 
 #download \
 #  "master.tar.gz" \
@@ -196,11 +206,12 @@ download \
 #  "9d8bc8be4fb6d9b369884c4a64398ed7" \
 #  "https://github.com/madler/zlib/archive/"
 
-download \
-  "v1.2.11.tar.gz" \
-  "zlib-1.2.11.tar.gz" \
-  "0095d2d2d1f3442ce1318336637b695f" \
-  "https://github.com/madler/zlib/archive/"
+#download \
+#  "v1.2.11.tar.gz" \
+#  "zlib-1.2.11.tar.gz" \
+#  "0095d2d2d1f3442ce1318336637b695f" \
+#  "https://github.com/madler/zlib/archive/"
+do_git_checkout https://github.com/madler/zlib.git "$BUILD_DIR"/zlib-git master
 
 download \
   "dev.tar.gz" \
@@ -243,6 +254,15 @@ download \
 #  "" \
 #  "b3fb85fd479c0bf950c626ef80cacb57" \
 #  "https://www.python.org/ftp/python/3.8.1/"
+
+# there's a 2.58 but guess I'd need to use meson for that
+download \
+  "glib-2.56.3.tar.xz" \
+  "" \
+  "f0b13af8f741fccdd43ed0adbcd276ec" \
+  "https://ftp.gnome.org/pub/gnome/sources/glib/2.56/"
+
+do_git_checkout https://github.com/hoene/libmysofa.git "$BUILD_DIR"/libmysofa-git v1.0
 
 download \
   "alsa-lib-1.2.1.2.tar.bz2" \
@@ -468,6 +488,16 @@ download \
   "3b9941dc7a52f0376694adb15a72903f" \
   "https://github.com/uclouvain/openjpeg/archive/"
 
+do_git_checkout https://github.com/DanBloomberg/leptonica.git "$BUILD_DIR"/leptonica-git master
+
+download \
+  "lensfun-0.3.95.tar.gz" \
+  "" \
+  "21107eaf72303706256481fef2dc8013" \
+  "https://sourceforge.net/projects/lensfun/files/0.3.95/"
+
+do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git a2e72f258a3bd6811cae226a01802d # #315
+
 download \
   "imlib2-1.6.1.tar.bz2" \
   "" \
@@ -580,6 +610,17 @@ nasm(){
   fi
 }
 
+libffi(){
+echo
+/bin/echo -e "\e[93m*** Building libffi ***\e[39m"
+echo
+cd $BUILD_DIR/libffi-*
+./autogen.sh
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared
+make -j $jval
+make install
+}
+
 linuxPAM(){
 echo
 /bin/echo -e "\e[93m*** Building linux-PAM ***\e[39m"
@@ -624,7 +665,7 @@ echo
 /bin/echo -e "\e[93m*** Building xz to get liblzma ( Dependency) ***\e[39m"
 echo
 cd $BUILD_DIR/xz-*
-./configure --prefix=$TARGET_DIR --enable-static --disable-shared --disable-xz --disable-xzdec --disable-lzmadec --disable-lzmainfo --disable-scripts --disable-doc --disable-nls
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared --disable-xz --disable-xzdec --disable-lzmadec --disable-lzmainfo --disable-scripts --disable-doc #--disable-nls
 make -j $jval
 make install
 }
@@ -646,24 +687,18 @@ make -j $jval
 make install
 }
 
-zlib1211(){
+zlib(){
 echo
 /bin/echo -e "\e[93m*** Building zlib-1.2.11 (Python Dependency) ***\e[39m"
 echo
-cd $BUILD_DIR/zlib-1.2.11
-# Remove files from zlib-1.2.5 build
-#rm -f ../../target/include/zconf.h
-#rm -f ../../target/include/zlib.h
-#rm -f ../../target/lib/libz.*
-#rm -f ../../target/lib/pkgconfig/zlib.pc
+cd $BUILD_DIR/zlib-git
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-#sed -i 's/"shared=1"/"shared=0"/g' ./configure
 if [ "$platform" = "linux" ]; then
-  [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --static
+  [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --static
 elif [ "$platform" = "darwin" ]; then
-  [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --static
+  [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --static
 fi
-PATH="$BIN_DIR:$PATH" make -j $jval
+make -j $jval
 make install
 }
 
@@ -687,7 +722,7 @@ echo
 echo
 cd $BUILD_DIR/tcl*/unix
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./configure --prefix=$TARGET_DIR --disable-shared
+./configure --prefix=$TARGET_DIR --disable-shared --enable-64bit
 PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 }
@@ -741,9 +776,44 @@ PATH="$BIN_DIR:$PATH" make -j $jval
 make install
 }
 
+glib() {
+echo
+/bin/echo -e "\e[93m*** Building glib ***\e[39m"
+echo
+#  export CPPFLAGS='-DLIBXML_STATIC' # gettext build...
+#  generic_download_and_make_and_install  https://ftp.gnu.org/pub/gnu/gettext/gettext-0.19.8.1.tar.xz
+#  unset CPPFLAGS
+#  generic_download_and_make_and_install  http://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz # also dep
+cd $BUILD_DIR/glib-*
+#    export CPPFLAGS='-liconv -pthread' # I think gettext wanted this but has no .pc file??
+#    if [[ $compiler_flavors != "native" ]]; then # seemingly unneeded for OS X
+#      apply_patch file://$patch_dir/glib_msg_fmt.patch # needed for configure
+#      apply_patch  file://$patch_dir/glib-prefer-constructors-over-DllMain.patch # needed for static. weird.
+#    fi
+#export ZLIB_CFLAGS="-I$TARGET_DIR/include"
+#export ZLIB_LIBS="-L$TARGET_DIR/lib"
+#export LIBFFI_CFLAGS="-I$TARGET_DIR/include"
+#export LIBFFI_LIBS="-L$TARGET_DIR/lib"
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared --with-pcre=internal # too lazy for pcre :) XXX
+make -j $jval
+make install
+}
+
+libmysofa() {
+echo
+/bin/echo -e "\e[93m***  Building libmysofa ***\e[39m"
+echo
+cd $BUILD_DIR/libmysofa-*
+PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_TESTS=0
+apply_patch file://$PATCH_DIR/libmysofa.patch -p1
+#patch -p1 -i $PATCH_DIR/libmysofa.patch
+make -j $jval
+make install
+}
+
 ALSAlib(){
 echo
-/bin/echo -e "\e[93m*** ALSAlib ***\e[39m"
+/bin/echo -e "\e[93m***  Building ALSAlib ***\e[39m"
 echo
 cd $BUILD_DIR/alsa-lib-*
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
@@ -887,7 +957,8 @@ echo
 /bin/echo -e "\e[93m*** Building vamp_plugin ***\e[39m"
 echo
 cd $BUILD_DIR/vamp-plugin-sdk-*
-patch -i $PATCH_DIR/vamp-plugin-sdk-2.7.1_static-lib.diff
+apply_patch file://$PATCH_DIR/vamp-plugin-sdk-2.7.1_static-lib.diff -p0
+#patch -i $PATCH_DIR/vamp-plugin-sdk-2.7.1_static-lib.diff
 #    if [[ ! -f configure.bak ]]; then # Fix for "'M_PI' was not declared in this scope" (see https://stackoverflow.com/a/29264536).
 #      sed -i.bak "s/c++98/gnu++98/" configure
 #    fi
@@ -1005,7 +1076,8 @@ echo
 /bin/echo -e "\e[93m*** Building librubberband ***\e[39m"
 echo
 cd $BUILD_DIR/rubberband-git
-patch -i $PATCH_DIR/rubberband_git_static-lib.diff # create install-static target
+apply_patch file://$PATCH_DIR/rubberband_git_static-lib.diff -p0 # create install-static target
+#patch -i $PATCH_DIR/rubberband_git_static-lib.diff
 ./configure --prefix=$TARGET_DIR
 make install-static # AR=${cross_prefix}ar # No need for 'do_make_install', because 'install-static' already has install-instructions.
     sed -i.bak 's/-lrubberband.*$/-lrubberband -lfftw3 -lsamplerate -lstdc++/' $TARGET_DIR/lib/pkgconfig/rubberband.pc
@@ -1025,7 +1097,7 @@ make install
 
 libtheora(){
 echo
-/bin/echo -e "\e[93mCompiling libtheora...\e[39m"
+/bin/echo -e "\e[93m*** Building libtheora ***\e[39m"
 echo
 cd $BUILD_DIR/libtheora-*
 sed -i 's/png_\(sizeof\)/\1/g' examples/png2theora.c
@@ -1102,19 +1174,46 @@ cd $BUILD_DIR/libwebp*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 ./autogen.sh
 export LIBPNG_CONFIG="$TARGET_DIR/bin/libpng16-config --static" # LibPNG somehow doesn't get autodetected.
-./configure --prefix=$TARGET_DIR --disable-shared # --enable-libwebpdecoder --enable-libwebpmux --enable-libwebpextras # --with-pnglibdir=$TARGET_DIR/lib --with-pngincludedir=$TARGET_DIR/include
+./configure --prefix=$TARGET_DIR --disable-shared --enable-libwebpdecoder --enable-libwebpmux --enable-libwebpextras # --with-pnglibdir=$TARGET_DIR/lib --with-pngincludedir=$TARGET_DIR/include
 make -j $jval
 make install
 }
 
+# No jbig and zstd, else 'tesseract not found using pkg-config'
 libTIFF(){
 echo
 /bin/echo -e "\e[93m*** Building libTIFF ***\e[39m"
 echo
+mv "$TARGET_DIR/lib/pkgconfig/libzstd.pc" "$TARGET_DIR/lib/pkgconfig/libzstd.pc.bak"
+mv "$TARGET_DIR/include/zstd.h" "$TARGET_DIR/include/zstd.h.bak"
+#rm -f "$TARGET_DIR/lib/pkgconfig/libzstd.pc" # remove zstd
+#rm -f "$TARGET_DIR/include/zstd.h"
+#rm -f "$TARGET_DIR/include/zbuff.h"
+#rm -f "$TARGET_DIR/include/zdict.h"
+#rm -f "$TARGET_DIR/include/cover.h"
+#rm -f "$TARGET_DIR/include/zstd_errors.h"
+#rm -f "$TARGET_DIR/lib/libzstd.a"
+#rm -f "$TARGET_DIR/lib/cmake/zstd/zstdConfig.cmake"
+#rm -f "$TARGET_DIR/lib/cmake/zstd/zstdExports.cmake"
+#rm -f "$TARGET_DIR/lib/cmake/zstd/zstdExports-release.cmake"
+#rm -f "$TARGET_DIR/bin/zstd"
+#rm -f "$TARGET_DIR/bin/zstdcat"
+#rm -f "$TARGET_DIR/bin/unzstd"
+#rm -f "$TARGET_DIR/bin/zstdgrep"
+#rm -f "$TARGET_DIR/bin/zstdless"
+#rm -f "$TARGET_DIR/share/man/man1/zstd.1"
+#rm -f "$TARGET_DIR/share/man/man1/zstdcat.1"
+#rm -f "$TARGET_DIR/share/man/man1/unzstd.1"
+#rm -f "$TARGET_DIR/share/man/man1/zstdgrep.1"
+#rm -f "$TARGET_DIR/share/man/man1/zstdless.1"
+#rm -f "$TARGET_DIR/bin/zstdmt"
 cd $BUILD_DIR/tiff-*
 ./configure --prefix=$TARGET_DIR --disable-shared
 make -j $jval
 make install
+mv "$TARGET_DIR/lib/pkgconfig/libzstd.pc.bak" "$TARGET_DIR/lib/pkgconfig/libzstd.pc"
+mv "$TARGET_DIR/include/zstd.h.bak" "$TARGET_DIR/include/zstd.h"
+#sed -i.bak 's/-ltiff.*$/-ltiff -ljpeg -ljbig -lzstd -lz -llzma -lm/' $PKG_CONFIG_PATH/libtiff-4.pc # static deps
 }
 
 libwebpRB(){
@@ -1124,7 +1223,7 @@ echo
 cd $BUILD_DIR/libwebp*
 make distclean
 ./autogen.sh
-./configure --prefix=$TARGET_DIR --disable-shared # --enable-libwebpdecoder --enable-libwebpmux --enable-libwebpextras # --with-pnglibdir=$TARGET_DIR/lib --with-pngincludedir=$TARGET_DIR/include
+./configure --prefix=$TARGET_DIR --disable-shared --enable-libwebpdecoder --enable-libwebpmux --enable-libwebpextras # --with-pnglibdir=$TARGET_DIR/lib --with-pngincludedir=$TARGET_DIR/include
 make -j $jval
 make install
 }
@@ -1232,6 +1331,50 @@ make -j $jval
 make install
 }
 
+libleptonica() {
+#  build_libjpeg_turbo
+echo
+/bin/echo -e "\e[93m*** Building libleptonica ***\e[39m"
+echo
+cd $BUILD_DIR/leptonica-*
+./autogen.sh
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared --without-libopenjpeg # never could quite figure out how to get it to work with jp2 stuffs...I think OPJ_STATIC or something, see issue for tesseract
+make -j $jval
+make install
+}
+
+lensfun() {
+# build_glib
+echo
+/bin/echo -e "\e[93m*** Building lensfun ***\e[39m"
+echo
+cd $BUILD_DIR/lensfun-*
+export CMAKE_STATIC_LINKER_FLAGS='-lws2_32 -pthread'
+PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_STATIC=on -DCMAKE_INSTALL_DATAROOTDIR=$TARGET_DIR
+make -j $jval
+make install
+sed -i.bak 's/-llensfun/-llensfun -lstdc++/' "$PKG_CONFIG_PATH/lensfun.pc"
+unset CMAKE_STATIC_LINKER_FLAGS
+}
+
+libtesseract() {
+# build_libleptonica
+# build_libtiff # no disable configure option for this in tesseract? odd...
+echo
+/bin/echo -e "\e[93m*** Building libtesseract ***\e[39m"
+echo
+cd $BUILD_DIR/tesseract-*
+./autogen.sh
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared
+make -j $jval
+make install
+#    if [[ $compiler_flavors != "native"  ]]; then
+#      sed -i.bak 's/-ltesseract.*$/-ltesseract -lstdc++ -lws2_32 -llept -ltiff -llzma -ljpeg -lz/' $PKG_CONFIG_PATH/tesseract.pc # why does it needs winsock? LOL plus all of libtiff's <sigh>
+#    else
+sed -i.bak 's/-ltesseract.*$/-ltesseract -lstdc++ -llept -ltiff -llzma -ljpeg -lz -lgomp/' $PKG_CONFIG_PATH/tesseract.pc # see above, gomp for linux native
+#    fi
+}
+
 imlib2(){
 echo
 /bin/echo -e "\e[93m*** Building imlib2 (libcaca dependency)***\e[39m"
@@ -1276,7 +1419,7 @@ echo
 cd $BUILD_DIR/frei0r-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 ./autogen.sh
-./configure --prefix=$TARGET_DIR --enable-static
+./configure --prefix=$TARGET_DIR --enable-static # --disable-shared
 make -j $jval
 make install
 }
@@ -1289,8 +1432,8 @@ cd $BUILD_DIR/xvidcore/build/generic
 #sed -i 's/^LN_S=@LN_S@/& -f -v/' platform.inc.in
 #sed -i '/AC_MSG_CHECKING(for platform specific LDFLAGS\/CFLAGS)/{n;s/.*/SPECIFIC_LDFLAGS="-static"/}' ./configure.in
 #sed -i '/SPECIFIC_LDFLAGS="-static"/{n;s/.*/SPECIFIC_CFLAGS="-static"/}' ./configure.in
-#apply_patch file://$PATCH_DIR/xvidcore-1.3.4_static-lib.diff -p0
-patch -i $PATCH_DIR/xvidcore-1.3.4_static-lib.diff
+apply_patch file://$PATCH_DIR/xvidcore-1.3.4_static-lib.diff -p0
+#patch -i $PATCH_DIR/xvidcore-1.3.4_static-lib.diff
 PATH="$BIN_DIR:$PATH" ./bootstrap.sh
 PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-shared
 PATH="$BIN_DIR:$PATH" make -j $jval
@@ -1329,7 +1472,7 @@ echo
 echo
 cd $BUILD_DIR/fribidi-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./configure --prefix=$TARGET_DIR --disable-shared --enable-static --disable-debug --disable-deprecated --disable-docs
+./configure --prefix=$TARGET_DIR --disable-shared --enable-static --disable-debug --disable-deprecated
 make -j $jval
 make install
 }
@@ -1361,7 +1504,7 @@ cd $BUILD_DIR/vid.stab-*
 #elif [ "$platform" = "darwin" ]; then
 #  sed -i "" "s/vidstab SHARED/vidstab STATIC/" ./CMakeLists.txt
 #fi
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DENABLE_STATIC_RUNTIME=1 -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR"
+PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR"
 make -j $jval
 make install
 }
@@ -1392,7 +1535,7 @@ if [ "$platform" = "linux" ]; then
   PKG_CONFIG_PATH="$TARGET_DIR/lib/pkgconfig" ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.3s \
+    --extra-version=Tec-3.4s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-libs="-lpthread -lm -lz -ldl -lharfbuzz" \
@@ -1403,12 +1546,11 @@ if [ "$platform" = "linux" ]; then
     --enable-gpl \
     --enable-nonfree \
     --enable-version3 \
-  --enable-alsa \
+    --enable-alsa \
     --enable-bzlib \
   --disable-chromaprint \
     --enable-fontconfig \
     --enable-frei0r \
-    --enable-fontconfig \
     --enable-iconv \
     --enable-libass \
     --enable-libcaca \
@@ -1417,7 +1559,9 @@ if [ "$platform" = "linux" ]; then
     --enable-libfreetype \
     --enable-libfribidi \
     --enable-libilbc \
+    --enable-liblensfun \
     --enable-libmp3lame \
+    --enable-libmysofa \
     --enable-libopencore-amrnb \
     --enable-libopencore-amrwb \
     --enable-libopenjpeg \
@@ -1428,6 +1572,7 @@ if [ "$platform" = "linux" ]; then
     --enable-libsnappy \
     --enable-libsoxr \
     --enable-libspeex \
+    --enable-libtesseract \
     --enable-libtheora \
     --enable-libtwolame \
     --enable-libvidstab \
@@ -1475,7 +1620,7 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libjack         enable JACK audio sound server [no]
 #  --enable-libklvanc       enable Kernel Labs VANC processing [no]
 #  --enable-libkvazaar      enable HEVC encoding via libkvazaar [no]
-#  --enable-liblensfun      enable lensfun lens correction [no]
+#    --enable-liblensfun      enable lensfun lens correction [no]
 #  --enable-libmodplug      enable ModPlug via libmodplug [no]
 #  --enable-libopencv       enable video filtering via libopencv [no]
 #  --enable-libopenh264     enable H.264 encoding via OpenH264 [no]
@@ -1487,7 +1632,7 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libsrt          enable Haivision SRT protocol via libsrt [no]
 #  --enable-libssh          enable SFTP protocol via libssh [no]
 #  --enable-libtensorflow   enable TensorFlow as a DNN module backend for DNN based filters like sr [no]
-#  --enable-libtesseract    enable Tesseract, needed for ocr filter [no]
+#    --enable-libtesseract    enable Tesseract, needed for ocr filter [no]
 #  --enable-libtls          enable LibreSSL (via libtls), needed for https support if openssl, gnutls or mbedtls is not used [no]
 #  --enable-libv4l2         enable libv4l2/v4l-utils [no]
 #  --enable-libwavpack      enable wavpack encoding via libwavpack [no]
@@ -1516,7 +1661,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.3s \
+    --extra-version=Tec-3.4s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \
@@ -1557,20 +1702,28 @@ make install
 make distclean
 }
 
+deps(){
 spd-say --rate -25 "Starting dependencies"
 #yasm
 asciidoc
 nasm
+libffi
 #linuxPAM
 #libcap
 liblzma
-zlib1211
+zlib
 libzstd
-tcl
-tkinter
+#tcl #tkinter dependecy
+#tkinter #python dependency
 libexpat
 #Python
-OpenSSL # Should be before Python
+glib
+OpenSSL # Should be before Python. Wants ZLIB
+}
+
+adeps(){
+spd-say --rate -25 "Starting audio dependencies"
+libmysofa # wants zlib
 ALSAlib
 voamrwbenc
 opencoreamr
@@ -1578,25 +1731,28 @@ fdkaac
 mp3lame
 opus
 libvpx
-librtmp
+librtmp # wants openssl
 libsoxr
-libflite #Doesn't work yet
-libsnappy
+libflite
+libsnappy # wants zlib
 vamp_plugin
 fftw
-libsamplerate
 libogg
-libflac
-libvorbis
+libflac # wants ogg
+libvorbis # needs ogg
 libspeexdsp
-libspeex
-libsndfile
-librubberband
-libtwolame
-libtheora
-#spd-say --rate -25 "Starting test"
+libspeex # needs libspeexdsp
+libsndfile # wants flac, ogg, speex, vorbis, opus, sqlite3, alsa
+libsamplerate # wants libsndfile, alsa, fftw3
+librubberband # wants libsndfile, fftw, samplerate
+libtwolame # wants libsndfile
+libtheora # wants ogg, vorbis, png
 #PulseAudio #Doesn't work yet
 #sdl1
+}
+
+pdeps(){
+spd-say --rate -25 "Starting picture dependencies"
 GIFlib
 libjpegturbo
 libPNG
@@ -1611,23 +1767,59 @@ FreeType2
 FontConfig
 harfbuzz
 #FreeType2RB
+fribidi
+libass
 openjpeg
+lensfun
+}
+
+tdeps(){
+libleptonica
+libtesseract
 imlib2
 libcaca
 libilbc
 frei0r
+}
+
+vdeps(){
+spd-say --rate -25 "Starting video dependencies"
 Xvid
 x264
 x265
-fribidi
-libass
 libvidstab
 zimg
 #sdl2
+}
 
+dp_time=$(date +%H:%M)
+echo $dp_time
+#deps
+adp_time=$(date +%H:%M)
+echo $adp_time
+adeps
+pdp_time=$(date +%H:%M)
+echo $pdp_time
+pdeps
+tdp_time=$(date +%H:%M)
+echo $tdp_time
+tdeps
+vdp_time=$(date +%H:%M)
+echo $vdp_time
+vdeps
 spd-say --rate -25 "Dependencies built"
+ff_time=$(date +%H:%M)
+echo $ff_time
 ffmpeg
 
-date +%H:%M:%S
+echo Started:				$start_time
+echo Dependencies Started:		$dp_time
+echo Audio Dependencies Started:	$adp_time
+echo Picture Dependencies Started:	$pdp_time
+echo Text Dependencies Started:		$tdp_time
+echo Video Dependencies Started:	$vdp_time
+echo ffmpeg Started:			$ff_time
+finish_time=$(date +%H:%M)
+echo $finish_time
 spd-say --rate -25 "Build Complete"
 hash -r
