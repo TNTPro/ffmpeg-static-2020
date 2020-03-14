@@ -175,10 +175,10 @@ cd $BUILD_DIR
 do_git_checkout https://github.com/asciidoc/asciidoc "$BUILD_DIR"/asciidoc-git master
 
 [ $is_x86 -eq 1 ] && download \
-  "nasm-2.14.tar.gz" \
+  "nasm-2.14.tar.xz" \
   "" \
-  "bc1cdaa06fc522eefa35c4ba881348f5" \
-  "http://www.nasm.us/pub/nasm/releasebuilds/2.14/"
+  "7d0f554cacd6c5021b3cda3ba9f2474c" \
+  "https://www.nasm.us/pub/nasm/stable/"
 
 do_git_checkout https://github.com/mesonbuild/meson.git "$BUILD_DIR"/meson-git master
 
@@ -649,7 +649,7 @@ echo
 /bin/echo -e "\e[93m*** Extracting ninja ***\e[39m"
 echo
 cd $DOWNLOAD_DIR/
-unzip -o -d ../bin ninja-linux.zip
+unzip -o -d "$TARGET_DIR"/bin ninja-linux.zip
 }
 
 libffi(){
