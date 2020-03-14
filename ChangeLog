@@ -1,3 +1,6 @@
+3.7s
+ - added libbluray and nv-codec-headers
+
 3.6s
  - added libcdio, libcdio-paranoia, libvcd
 
