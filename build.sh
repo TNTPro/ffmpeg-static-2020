@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 3.5s
+# ffmpeg static build 3.6s
 
 set -e
 set -u
@@ -66,7 +66,7 @@ esac
 
 #if you want a rebuild
 #rm -rf "$BUILD_DIR" "$TARGET_DIR"
-mkdir -p "$BUILD_DIR" "$TARGET_DIR" "$DOWNLOAD_DIR" "$BIN_DIR"
+mkdir -pv "$BUILD_DIR" "$TARGET_DIR" "$DOWNLOAD_DIR" "$BIN_DIR"
 
 #download and extract package
 download(){
@@ -194,7 +194,9 @@ download \
 #mv -f "$BUILD_DIR/cmake-3.16.4-Linux-x86_64/man" "$BUILD_DIR/../"
 #mv -f "$BUILD_DIR/cmake-3.16.4-Linux-x86_64/share" "$BUILD_DIR/../"
 
-wget -L -P "$DOWNLOAD_DIR" https://github.com/ninja-build/ninja/releases/download/v1.10.0/ninja-linux.zip
+if [ ! -f "$DOWNLOAD_DIR"/ninja-linux.zip ]; then
+  wget -L -P "$DOWNLOAD_DIR" https://github.com/ninja-build/ninja/releases/download/v1.10.0/ninja-linux.zip
+fi
 #download \
 #  "ninja-linux.zip" \
 #  "" \
@@ -280,6 +282,12 @@ download \
   "" \
   "f0b13af8f741fccdd43ed0adbcd276ec" \
   "https://ftp.gnome.org/pub/gnome/sources/glib/2.56/"
+
+do_git_checkout https://git.savannah.gnu.org/git/libcdio.git "$BUILD_DIR"/libcdio-git master
+
+do_git_checkout https://github.com/rocky/libcdio-paranoia.git "$BUILD_DIR"/libcdio-paranoia-git master
+
+do_git_checkout https://github.com/rocky/vcdimager.git "$BUILD_DIR"/vcdimager-git master
 
 do_git_checkout https://github.com/hoene/libmysofa.git "$BUILD_DIR"/libmysofa-git v1.0
 
@@ -838,6 +846,61 @@ cd $BUILD_DIR/glib-*
 #export LIBFFI_LIBS="-L$TARGET_DIR/lib"
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --with-pcre=internal # too lazy for pcre :) XXX
 make -j $jval
+make install
+}
+
+#Requires: glib-2.0 maybe?
+build_libcdio() {
+echo
+/bin/echo -e "\e[93m*** Building libcdio ***\e[39m"
+echo
+cd "$BUILD_DIR"/libcdio-git
+./autogen.sh --prefix=$TARGET_DIR --disable-shared --disable-cddb
+make -j $(nproc)
+make install
+}
+
+build_libcdio_paranoia() {
+echo
+/bin/echo -e "\e[93m*** Building libcdio_paranoia ***\e[39m"
+echo
+cd "$BUILD_DIR"/libcdio-paranoia-git
+./autogen.sh --prefix=$TARGET_DIR --disable-shared
+make -j $(nproc)
+make install
+}
+
+build_vcdimager() {
+echo
+/bin/echo -e "\e[93m*** Building VCDImager ***\e[39m"
+echo
+cd "$BUILD_DIR"/vcdimager-*
+./autogen.sh --prefix=$TARGET_DIR --disable-shared
+make -j $(nproc)
+make install
+}
+
+rebuild_libcdio() {
+echo
+/bin/echo -e "\e[93m*** Rebuilding libcdio ***\e[39m"
+echo
+cd "$BUILD_DIR"/libcdio-git
+git reset --hard
+git clean -f
+./autogen.sh --prefix=$TARGET_DIR --disable-shared --disable-cddb --enable-vcd-info
+make -j $(nproc)
+make install
+}
+
+rebuild_libcdio_paranoia() {
+echo
+/bin/echo -e "\e[93m*** Rebuilding libcdio_paranoia ***\e[39m"
+echo
+cd "$BUILD_DIR"/libcdio-paranoia-git
+git reset --hard
+git clean -f
+./autogen.sh --prefix=$TARGET_DIR --disable-shared
+make -j $(nproc)
 make install
 }
 
@@ -1577,7 +1640,7 @@ if [ "$platform" = "linux" ]; then
   PKG_CONFIG_PATH="$TARGET_DIR/lib/pkgconfig" ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.5s \
+    --extra-version=Tec-3.6s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-libs="-lpthread -lm -lz -ldl -lharfbuzz" \
@@ -1597,6 +1660,7 @@ if [ "$platform" = "linux" ]; then
     --enable-libaom  \
     --enable-libass \
     --enable-libcaca \
+    --enable-libcdio \
     --enable-libdav1d \
     --enable-libfdk-aac \
     --enable-libflite \
@@ -1652,7 +1716,6 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libbluray       enable BluRay reading using libbluray [no]
 #  --enable-libbs2b         enable bs2b DSP library [no]
 #  --enable-libcelt         enable CELT decoding via libcelt [no]
-#  --enable-libcdio         enable audio CD grabbing with libcdio [no]
 #  --enable-libcodec2       enable codec2 en/decoding using libcodec2 [no]
 #  --enable-libdavs2        enable AVS2 decoding via libdavs2 [no]
 #  --enable-libdc1394       enable IIDC-1394 grabbing using libdc1394 and libraw1394 [no]
@@ -1673,7 +1736,6 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libsrt          enable Haivision SRT protocol via libsrt [no]
 #  --enable-libssh          enable SFTP protocol via libssh [no]
 #  --enable-libtensorflow   enable TensorFlow as a DNN module backend for DNN based filters like sr [no]
-#  --enable-libtls          enable LibreSSL (via libtls), needed for https support if openssl, gnutls or mbedtls is not used [no]
 #  --enable-libv4l2         enable libv4l2/v4l-utils [no]
 #  --enable-libwavpack      enable wavpack encoding via libwavpack [no]
 #  --enable-libxavs         enable AVS encoding via xavs [no]
@@ -1682,7 +1744,6 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libzvbi         enable teletext support via libzvbi [no]
 #  --enable-lv2             enable LV2 audio filtering [no]
 #  --enable-decklink        enable Blackmagic DeckLink I/O support [no]
-#  --enable-mbedtls         enable mbedTLS, needed for https support if openssl, gnutls or libtls is not used [no]
 #  --enable-mediacodec      enable Android MediaCodec support [no] (requires --enable-jni)
 #  --enable-openal          enable OpenAL 1.1 capture support [no]
 #  --enable-opencl          enable OpenCL processing [no]
@@ -1700,7 +1761,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.5s \
+    --extra-version=Tec-3.6s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \
@@ -1760,6 +1821,11 @@ libexpat
 #Python
 glib
 OpenSSL # Should be before Python. Wants ZLIB
+build_libcdio
+build_libcdio_paranoia
+build_vcdimager
+rebuild_libcdio
+rebuild_libcdio_paranoia
 }
 
 adeps(){
