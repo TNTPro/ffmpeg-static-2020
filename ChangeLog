@@ -1,3 +1,7 @@
+3.4s
+ - added libffi, glib-2.56.3, libmysofa, leptonica, lensfun and tesseract
+ - update versions
+
 3.3s
  - added libflite, libsnappy, vamp-plugin-sdk-v2.7.1, fftw-3.3.6-pl2, libsamplerate, rubberband
 
