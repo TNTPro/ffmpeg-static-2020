@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 3.7s
+# ffmpeg static build 3.8s
 
 set -e
 set -u
@@ -77,6 +77,27 @@ download(){
   ../download.pl "$DOWNLOAD_DIR" "$1" "$filename" "$3" "$4"
   #disable uncompress
   REPLACE="$rebuild" CACHE_DIR="$DOWNLOAD_DIR" ../fetchurl "http://cache/$filename"
+}
+
+do_svn_checkout() {
+  repo_url="$1"
+  to_dir="$2"
+  desired_revision="$3"
+  if [ ! -d $to_dir ]; then
+    echo "svn checking out to $to_dir"
+    if [ -z "$desired_revision" ]; then
+      svn checkout $repo_url $to_dir.tmp  --non-interactive --trust-server-cert || exit 1
+    else
+      svn checkout -r $desired_revision $repo_url $to_dir.tmp || exit 1
+    fi
+    mv $to_dir.tmp $to_dir
+  else
+    cd $to_dir
+    echo "not svn Updating $to_dir since usually svn repo's aren't updated frequently enough..."
+    # XXX accomodate for desired revision here if I ever uncomment the next line...
+    # svn up
+    cd ..
+  fi
 }
 
 do_git_checkout() {
@@ -160,8 +181,6 @@ echo_and_exit() {
 echo
 /bin/echo -e "\e[93m#### FFmpeg static build ####\e[39m"
 echo
-dl_time=$(date +%H:%M)
-echo $dl_time
 
 #this is our working directory
 cd $BUILD_DIR
@@ -189,19 +208,10 @@ download \
   "" \
   "d3ac45c550a1b6799ff370cdb6b7bbe0" \
   "https://github.com/Kitware/CMake/releases/download/v3.16.4/"
-#mv -f "$BUILD_DIR/cmake-3.16.4-Linux-x86_64/bin/c*" "$BUILD_DIR/../bin/"
-#mv -f "$BUILD_DIR/cmake-3.16.4-Linux-x86_64/doc" "$BUILD_DIR/../"
-#mv -f "$BUILD_DIR/cmake-3.16.4-Linux-x86_64/man" "$BUILD_DIR/../"
-#mv -f "$BUILD_DIR/cmake-3.16.4-Linux-x86_64/share" "$BUILD_DIR/../"
 
 if [ ! -f "$DOWNLOAD_DIR"/ninja-linux.zip ]; then
   wget -L -P "$DOWNLOAD_DIR" https://github.com/ninja-build/ninja/releases/download/v1.10.0/ninja-linux.zip
 fi
-#download \
-#  "ninja-linux.zip" \
-#  "" \
-#  "e40d1b8506145b333f8a1c4f3447dcef" \
-#  "https://github.com/ninja-build/ninja/releases/download/v1.10.0/"
 
 #download \
 #  "master.tar.gz" \
@@ -215,54 +225,35 @@ fi
 #  "nil" \
 #  "https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/"
 
-download \
-  "xz-5.2.4.tar.gz" \
-  "" \
-  "5ace3264bdd00c65eeec2891346f65e6" \
-  "https://tukaani.org/xz/"
+do_git_checkout https://git.tukaani.org/xz.git "$BUILD_DIR"/xz-git master # v5.2.4
 
-#download \
-#  "v1.2.5.tar.gz" \
-#  "zlib-1.2.5.tar.gz" \
-#  "9d8bc8be4fb6d9b369884c4a64398ed7" \
-#  "https://github.com/madler/zlib/archive/"
-
-#download \
-#  "v1.2.11.tar.gz" \
-#  "zlib-1.2.11.tar.gz" \
-#  "0095d2d2d1f3442ce1318336637b695f" \
-#  "https://github.com/madler/zlib/archive/"
 do_git_checkout https://github.com/madler/zlib.git "$BUILD_DIR"/zlib-git master
 
-download \
-  "dev.tar.gz" \
-  "zstd-dev.tar.gz" \
-  "nil" \
-  "https://github.com/facebook/zstd/archive/"
+do_git_checkout https://github.com/facebook/zstd.git "$BUILD_DIR"/zstd-git master
 
-download \
-  "tcl8.6.10-src.tar.gz" \
-  "" \
-  "97c55573f8520bcab74e21bfd8d0aadc" \
-  "https://netcologne.dl.sourceforge.net/project/tcl/Tcl/8.6.10/"
+#download \
+#  "tcl8.6.10-src.tar.gz" \
+#  "" \
+#  "97c55573f8520bcab74e21bfd8d0aadc" \
+#  "https://netcologne.dl.sourceforge.net/project/tcl/Tcl/8.6.10/"
 
-download \
-  "tk8.6.10-src.tar.gz" \
-  "" \
-  "602a47ad9ecac7bf655ada729d140a94" \
-  "https://netix.dl.sourceforge.net/project/tcl/Tcl/8.6.10/"
+#download \
+#  "tk8.6.10-src.tar.gz" \
+#  "" \
+#  "602a47ad9ecac7bf655ada729d140a94" \
+#  "https://netix.dl.sourceforge.net/project/tcl/Tcl/8.6.10/"
 
-download \
-  "master.tar.gz" \
-  "libexpat-master.tar.gz" \
-  "nil" \
-  "https://github.com/libexpat/libexpat/archive/"
+do_git_checkout https://github.com/libexpat/libexpat.git "$BUILD_DIR"/libexpat-git master
 
-download \
-  "OpenSSL_1_0_2o.tar.gz" \
-  "" \
-  "5b5c050f83feaa0c784070637fac3af4" \
-  "https://github.com/openssl/openssl/archive/"
+#download \
+#  "OpenSSL_1_0_2o.tar.gz" \
+#  "" \
+#  "5b5c050f83feaa0c784070637fac3af4" \
+#  "https://github.com/openssl/openssl/archive/"
+do_git_checkout https://github.com/openssl/openssl.git "$BUILD_DIR"/openssl-old-git OpenSSL_1_0_2u
+#do_git_checkout https://github.com/openssl/openssl.git "$BUILD_DIR"/openssl-git OpenSSL_1_1_1d #OpenSSL_1_1_0l OpenSSL_1_0_2u
+
+do_git_checkout https://git.ffmpeg.org/rtmpdump "$BUILD_DIR"/rtmpdump-git master
 
 #download \
 #  "Python-2.7.17.tar.xz" \
@@ -279,11 +270,8 @@ download \
 do_git_checkout https://git.videolan.org/git/ffmpeg/nv-codec-headers.git "$BUILD_DIR"/nv-codec-headers-git master
 
 # there's a 2.58 but guess I'd need to use meson for that
-download \
-  "glib-2.56.3.tar.xz" \
-  "" \
-  "f0b13af8f741fccdd43ed0adbcd276ec" \
-  "https://ftp.gnome.org/pub/gnome/sources/glib/2.56/"
+# there's also a 2.56.4 2.57.1 2.57.2 2.57.3
+do_git_checkout https://gitlab.gnome.org/GNOME/glib.git "$BUILD_DIR"/glib-git 2.56.3
 
 do_git_checkout https://git.savannah.gnu.org/git/libcdio.git "$BUILD_DIR"/libcdio-git master
 
@@ -295,168 +283,157 @@ do_git_checkout https://code.videolan.org/videolan/libbluray.git "$BUILD_DIR"/li
 
 do_git_checkout https://github.com/hoene/libmysofa.git "$BUILD_DIR"/libmysofa-git v1.0
 
-download \
-  "alsa-lib-1.2.1.2.tar.bz2" \
-  "" \
-  "82ddd3698469beec147e4f4a67134ea0" \
-  "https://www.alsa-project.org/files/pub/lib/"
+#download \
+#  "alsa-lib-1.2.1.2.tar.bz2" \
+#  "" \
+#  "82ddd3698469beec147e4f4a67134ea0" \
+#  "https://www.alsa-project.org/files/pub/lib/"
+do_git_checkout https://git.alsa-project.org/http/alsa-lib.git "$BUILD_DIR"/alsa-lib-git master
 
-download \
-  "vo-amrwbenc-0.1.3.tar.gz" \
-  "" \
-  "f63bb92bde0b1583cb3cb344c12922e0" \
-  "http://downloads.sourceforge.net/opencore-amr/vo-amrwbenc/"
-#do_git_checkout https://github.com/mstorsjo/vo-amrwbenc.git "$BUILD_DIR"/vo-amrwbenc-git master
+#download \
+#  "vo-amrwbenc-0.1.3.tar.gz" \
+#  "" \
+#  "f63bb92bde0b1583cb3cb344c12922e0" \
+#  "http://downloads.sourceforge.net/opencore-amr/vo-amrwbenc/"
+do_git_checkout https://github.com/mstorsjo/vo-amrwbenc.git "$BUILD_DIR"/vo-amrwbenc-git master
 
-download \
-  "opencore-amr-0.1.3.tar.gz" \
-  "" \
-  "09d2c5dfb43a9f6e9fec8b1ae678e725" \
-  "http://downloads.sourceforge.net/opencore-amr/opencore-amr/"
-#do_git_checkout https://github.com/BelledonneCommunications/opencore-amr.git "$BUILD_DIR"/opencore-amr-git master
+#download \
+#  "opencore-amr-0.1.3.tar.gz" \
+#  "" \
+#  "09d2c5dfb43a9f6e9fec8b1ae678e725" \
+#  "http://downloads.sourceforge.net/opencore-amr/opencore-amr/"
+do_git_checkout https://github.com/BelledonneCommunications/opencore-amr.git "$BUILD_DIR"/opencore-amr-git master
 
-download \
-  "v2.0.1.tar.gz" \
-  "fdk-aac-2.0.1.tar.gz" \
-  "5b85f858ee416a058574a1028a3e1b85" \
-  "https://github.com/mstorsjo/fdk-aac/archive"
+#download \
+#  "v2.0.1.tar.gz" \
+#  "fdk-aac-2.0.1.tar.gz" \
+#  "5b85f858ee416a058574a1028a3e1b85" \
+#  "https://github.com/mstorsjo/fdk-aac/archive"
+do_git_checkout https://github.com/mstorsjo/fdk-aac.git "$BUILD_DIR"/fdk-aac-git master
 
-download \
-  "lame-3.100.tar.gz" \
-  "" \
-  "83e260acbe4389b54fe08e0bdbf7cddb" \
-  "http://downloads.sourceforge.net/project/lame/lame/3.100"
+#download \
+#  "lame-3.100.tar.gz" \
+#  "" \
+#  "83e260acbe4389b54fe08e0bdbf7cddb" \
+#  "http://downloads.sourceforge.net/project/lame/lame/3.100"
+do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame "$BUILD_DIR"/lame-svn 6449
 
-download \
-  "v1.3.1.tar.gz" \
-  "opus-1.3.1.tar.gz" \
-  "b27f67923ffcbc8efb4ce7f29cbe3faf" \
-  "https://github.com/xiph/opus/archive/"
+#download \
+#  "v1.3.1.tar.gz" \
+#  "opus-1.3.1.tar.gz" \
+#  "b27f67923ffcbc8efb4ce7f29cbe3faf" \
+#  "https://github.com/xiph/opus/archive/"
+do_git_checkout https://github.com/xiph/opus.git "$BUILD_DIR"/opus-git master
 
-download \
-  "v1.8.2.tar.gz" \
-  "libvpx-v1.8.2.tar.gz" \
-  "6dbccca688886c66a216d7e445525bce" \
-  "https://github.com/webmproject/libvpx/archive/"
-#do_git_checkout https://chromium.googlesource.com/webm/libvpx "$BUILD_DIR"/libvpx-git master
+#download \
+#  "v1.8.2.tar.gz" \
+#  "libvpx-v1.8.2.tar.gz" \
+#  "6dbccca688886c66a216d7e445525bce" \
+#  "https://github.com/webmproject/libvpx/archive/"
+do_git_checkout https://chromium.googlesource.com/webm/libvpx "$BUILD_DIR"/libvpx-git master
 
-download \
-  "rtmpdump-2.3.tgz" \
-  "" \
-  "eb961f31cd55f0acf5aad1a7b900ef59" \
-  "https://rtmpdump.mplayerhq.hu/download/"
+#download \
+#  "soxr-0.1.3-Source.tar.xz" \
+#  "" \
+#  "3f16f4dcb35b471682d4321eda6f6c08" \
+#  "https://sourceforge.net/projects/soxr/files/"
+do_git_checkout https://git.code.sf.net/p/soxr/code "$BUILD_DIR"/soxr-git master
 
-download \
-  "soxr-0.1.3-Source.tar.xz" \
-  "" \
-  "3f16f4dcb35b471682d4321eda6f6c08" \
-  "https://sourceforge.net/projects/soxr/files/"
-
-#download_and_unpack_file http://www.festvox.org/flite/packed/flite-2.0/flite-2.0.0-release.tar.bz2 $BUILD_DIR/flite-2.0.0-release
 do_git_checkout https://github.com/kubo/flite.git $BUILD_DIR/flite-git master
 
 do_git_checkout https://github.com/google/snappy.git $BUILD_DIR/snappy-git master
 
-download \
-  "vamp-plugin-sdk-v2.7.1.tar.gz" \
-  "vamp-plugin-sdk-vamp-plugin-sdk-v2.7.1.tar.gz" \
-  "0199b4cc0bc817566f6840c9ae8dc315" \
-  "https://github.com/c4dm/vamp-plugin-sdk/archive/"
-#download_and_unpack_file https://github.com/c4dm/vamp-plugin-sdk/archive/vamp-plugin-sdk-v2.7.1.tar.gz $BUILD_DIR/vamp-plugin-sdk-vamp-plugin-sdk-v2.7.1
+#download \
+#  "vamp-plugin-sdk-v2.7.1.tar.gz" \
+#  "vamp-plugin-sdk-vamp-plugin-sdk-v2.7.1.tar.gz" \
+#  "0199b4cc0bc817566f6840c9ae8dc315" \
+#  "https://github.com/c4dm/vamp-plugin-sdk/archive/"
+do_git_checkout https://github.com/c4dm/vamp-plugin-sdk.git "$BUILD_DIR"/vamp-plugin-sdk-git master
 
 download \
   "fftw-3.3.6-pl2.tar.gz" \
   "" \
   "927e481edbb32575397eb3d62535a856" \
   "http://fftw.org/"
-#download_and_unpack_file http://fftw.org/fftw-3.3.6-pl2.tar.gz $BUILD_DIR/fftw-3.3.6-pl2
 
 do_git_checkout https://github.com/erikd/libsamplerate.git $BUILD_DIR/libsamplerate-git master
 
 do_git_checkout https://github.com/breakfastquay/rubberband.git $BUILD_DIR/rubberband-git master
 
 
-download \
-  "v1.3.4.tar.gz" \
-  "ogg-1.3.4.tar.gz" \
-  "df1a9a95251a289aa5515b869db4b15f" \
-  "https://github.com/xiph/ogg/archive/"
-
-download \
-  "master.tar.gz" \
-  "flac-master.tar.gz" \
-  "nil" \
-  "https://github.com/xiph/flac/archive/"
-
-download \
-  "v1.3.6.tar.gz" \
-  "vorbis-1.3.6.tar.gz" \
-  "03e967efb961f65a313459c5d0f4cbfb" \
-  "https://github.com/xiph/vorbis/archive/"
-
-do_git_checkout https://github.com/xiph/speexdsp.git "$BUILD_DIR"/speexdsp-git master
-
-download \
-  "Speex-1.2.0.tar.gz" \
-  "Speex-1.2.0.tar.gz" \
-  "4bec86331abef56129f9d1c994823f03" \
-  "https://github.com/xiph/speex/archive/"
-
-download \
-  "master.tar.gz" \
-  "libsndfile-master.tar.gz" \
-  "nil" \
-  "https://github.com/erikd/libsndfile/archive/"
-
 #download \
-#  "twolame-0.3.13.tar.gz" \
-#  "" \
-#  "4113d8aa80194459b45b83d4dbde8ddb" \
-#  "https://github.com/njh/twolame/releases/download/0.3.13/"
-
-download \
-  "twolame-0.4.0.tar.gz" \
-  "" \
-  "400c164ed096c7aea82bcf8edcd3f6f9" \
-  "https://github.com/njh/twolame/releases/download/0.4.0/"
+#  "v1.3.4.tar.gz" \
+#  "ogg-1.3.4.tar.gz" \
+#  "df1a9a95251a289aa5515b869db4b15f" \
+#  "https://github.com/xiph/ogg/archive/"
+do_git_checkout https://github.com/xiph/ogg.git $BUILD_DIR/ogg-git master
 
 #download \
 #  "master.tar.gz" \
-#  "twolame-master.tar.gz" \
+#  "flac-master.tar.gz" \
 #  "nil" \
-#  "https://github.com/njh/twolame/archive/"
+#  "https://github.com/xiph/flac/archive/"
+do_git_checkout https://github.com/xiph/flac.git $BUILD_DIR/flac-git master
 
-download \
-  "libtheora-1.1.1.tar.gz" \
-  "" \
-  "bb4dc37f0dc97db98333e7160bfbb52b" \
-  "http://downloads.xiph.org/releases/theora/"
+#download \
+#  "v1.3.6.tar.gz" \
+#  "vorbis-1.3.6.tar.gz" \
+#  "03e967efb961f65a313459c5d0f4cbfb" \
+#  "https://github.com/xiph/vorbis/archive/"
+do_git_checkout https://github.com/xiph/vorbis.git $BUILD_DIR/vorbis-git master
+
+do_git_checkout https://github.com/xiph/speexdsp.git "$BUILD_DIR"/speexdsp-git master
+
+#download \
+#  "Speex-1.2.0.tar.gz" \
+#  "Speex-1.2.0.tar.gz" \
+#  "4bec86331abef56129f9d1c994823f03" \
+#  "https://github.com/xiph/speex/archive/"
+do_git_checkout https://github.com/xiph/speex.git $BUILD_DIR/speex-git master
+
+#download \
+#  "master.tar.gz" \
+#  "libsndfile-master.tar.gz" \
+#  "nil" \
+#  "https://github.com/erikd/libsndfile/archive/"
+do_git_checkout https://github.com/erikd/libsndfile.git $BUILD_DIR/libsndfile-git master
+
+#download \
+#  "twolame-0.4.0.tar.gz" \
+#  "" \
+#  "400c164ed096c7aea82bcf8edcd3f6f9" \
+#  "https://github.com/njh/twolame/releases/download/0.4.0/"
+do_git_checkout https://github.com/njh/twolame.git $BUILD_DIR/twolame-git master
+
+#download \
+#  "libtheora-1.1.1.tar.gz" \
+#  "" \
+#  "bb4dc37f0dc97db98333e7160bfbb52b" \
+#  "http://downloads.xiph.org/releases/theora/"
+do_git_checkout https://github.com/xiph/theora.git $BUILD_DIR/libtheora-git master
 
 ##download \
 ##  "master.tar.gz" \
 ##  "pulseaudio-master.tar.gz" \
 ##  "nil" \
 ##  "https://github.com/pulseaudio/pulseaudio/archive/"
-#do_git_checkout https://github.com/pulseaudio/pulseaudio "$BUILD_DIR"/pulseaudio-git master
+#do_git_checkout https://github.com/pulseaudio/pulseaudio.git "$BUILD_DIR"/pulseaudio-git master
 
-#download \
-#  "giflib-5.2.1.tar.gz" \
-#  "" \
-#  "6f03aee4ebe54ac2cc1ab3e4b0a049e5" \
-#  "https://sourceforge.net/projects/giflib/files/"
 do_git_checkout https://git.code.sf.net/u/ffontaine35/giflib "$BUILD_DIR"/giflib-ffontaine35-git master
 
-download \
-  "master.tar.gz" \
-  "libjpeg-turbo-master.tar.gz" \
-  "nil" \
-  "https://github.com/libjpeg-turbo/libjpeg-turbo/archive/"
+#download \
+#  "master.tar.gz" \
+#  "libjpeg-turbo-master.tar.gz" \
+#  "nil" \
+#  "https://github.com/libjpeg-turbo/libjpeg-turbo/archive/"
+do_git_checkout https://github.com/libjpeg-turbo/libjpeg-turbo.git $BUILD_DIR/libjpeg-turbo-git master
 
-download \
-  "master.tar.gz" \
-  "libpng-master.tar.gz" \
-  "nil" \
-  "https://github.com/glennrp/libpng/archive/"
+#download \
+#  "master.tar.gz" \
+#  "libpng-master.tar.gz" \
+#  "nil" \
+#  "https://github.com/glennrp/libpng/archive/"
+do_git_checkout https://github.com/glennrp/libpng.git "$BUILD_DIR"/libpng-git master
 
 download \
   "libid3tag-0.15.1b.tar.gz" \
@@ -464,17 +441,19 @@ download \
   "e5808ad997ba32c498803822078748c3" \
   "https://sourceforge.net/projects/mad/files/"
 
-download \
-  "v1.1.0.tar.gz" \
-  "libwebp-1.1.0.tar.gz" \
-  "35831dd0f8d42119691eb36f2b9d23b7" \
-  "https://github.com/webmproject/libwebp/archive/"
+#download \
+#  "v1.1.0.tar.gz" \
+#  "libwebp-1.1.0.tar.gz" \
+#  "35831dd0f8d42119691eb36f2b9d23b7" \
+#  "https://github.com/webmproject/libwebp/archive/"
+do_git_checkout https://github.com/webmproject/libwebp "$BUILD_DIR"/libwebp-git master
 
-download \
-  "tiff-4.1.0.tar.gz" \
-  "" \
-  "nil" \
-  "http://download.osgeo.org/libtiff/"
+#download \
+#  "tiff-4.1.0.tar.gz" \
+#  "" \
+#  "nil" \
+#  "http://download.osgeo.org/libtiff/"
+do_git_checkout https://gitlab.com/libtiff/libtiff.git "$BUILD_DIR"/tiff-git master
 
 #download \
 #  "util-macros-1.19.2.tar.gz" \
@@ -488,65 +467,73 @@ download \
 #  "802ccb9e977ba3cf94ba798ddb2898a4" \
 #  "https://xorg.freedesktop.org/archive/individual/proto/"
 
-download \
-  "libxml2-2.9.10.tar.gz" \
-  "" \
-  "10942a1dc23137a8aa07f0639cbfece5" \
-  "http://xmlsoft.org/sources/"
+#download \
+#  "libxml2-2.9.10.tar.gz" \
+#  "" \
+#  "10942a1dc23137a8aa07f0639cbfece5" \
+#  "http://xmlsoft.org/sources/"
+do_git_checkout https://gitlab.gnome.org/GNOME/libxml2.git "$BUILD_DIR"/libxml2-git master
 
 download \
   "freetype-2.10.1.tar.xz" \
   "" \
   "bd42e75127f8431923679480efb5ba8f" \
   "https://downloads.sourceforge.net/freetype/"
+#do_git_checkout https://git.savannah.gnu.org/git/freetype/freetype2.git "$BUILD_DIR"/freetype-2-git VER-2-10-1
 
-download \
-  "fontconfig-2.13.92.tar.xz" \
-  "" \
-  "d5431bf5456522380d4c2c9c904a6d96" \
-  "https://www.freedesktop.org/software/fontconfig/release/"
+#download \
+#  "fontconfig-2.13.92.tar.xz" \
+#  "" \
+#  "d5431bf5456522380d4c2c9c904a6d96" \
+#  "https://www.freedesktop.org/software/fontconfig/release/"
+do_git_checkout https://gitlab.freedesktop.org/fontconfig/fontconfig.git "$BUILD_DIR"/fontconfig-git master
 
 # libass dependency
-download \
-  "2.6.4.tar.gz" \
-  "harfbuzz-2.6.4.tar.gz" \
-  "188407981048daf6d92d554cfeeed48e" \
-  "https://github.com/harfbuzz/harfbuzz/archive/"
+#download \
+#  "2.6.4.tar.gz" \
+#  "harfbuzz-2.6.4.tar.gz" \
+#  "188407981048daf6d92d554cfeeed48e" \
+#  "https://github.com/harfbuzz/harfbuzz/archive/"
+do_git_checkout https://github.com/harfbuzz/harfbuzz.git "$BUILD_DIR"/harfbuzz-git master
 
-download \
-  "v2.3.1.tar.gz" \
-  "openjpeg-2.3.1.tar.gz" \
-  "3b9941dc7a52f0376694adb15a72903f" \
-  "https://github.com/uclouvain/openjpeg/archive/"
+#download \
+#  "v2.3.1.tar.gz" \
+#  "openjpeg-2.3.1.tar.gz" \
+#  "3b9941dc7a52f0376694adb15a72903f" \
+#  "https://github.com/uclouvain/openjpeg/archive/"
+do_git_checkout https://github.com/uclouvain/openjpeg.git "$BUILD_DIR"/openjpeg-git master
 
 do_git_checkout https://github.com/DanBloomberg/leptonica.git "$BUILD_DIR"/leptonica-git master
 
-download \
-  "lensfun-0.3.95.tar.gz" \
-  "" \
-  "21107eaf72303706256481fef2dc8013" \
-  "https://sourceforge.net/projects/lensfun/files/0.3.95/"
+#download \
+#  "lensfun-0.3.95.tar.gz" \
+#  "" \
+#  "21107eaf72303706256481fef2dc8013" \
+#  "https://sourceforge.net/projects/lensfun/files/0.3.95/"
+do_git_checkout https://github.com/lensfun/lensfun.git "$BUILD_DIR"/lensfun-git master
 
 do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git a2e72f258a3bd6811cae226a01802d # #315
 
-download \
-  "imlib2-1.6.1.tar.bz2" \
-  "" \
-  "7b3fbcb974b48822b32b326c6a47764b" \
-  "https://netix.dl.sourceforge.net/project/enlightenment/imlib2-src/1.6.1/"
+#download \
+#  "imlib2-1.6.1.tar.bz2" \
+#  "" \
+#  "7b3fbcb974b48822b32b326c6a47764b" \
+#  "https://netix.dl.sourceforge.net/project/enlightenment/imlib2-src/1.6.1/"
+do_git_checkout https://git.enlightenment.org/legacy/imlib2.git "$BUILD_DIR"/imlib2-git master
 
-download \
-  "v0.99.beta19.tar.gz" \
-  "libcaca-0.99.beta19.tar.gz" \
-  "2e1ed59dc3cb2f69d3d98fd0e6a205b4" \
-  "https://github.com/cacalabs/libcaca/archive/"
-#do_git_checkout https://github.com/cacalabs/libcaca.git "$BUILD_DIR"/libcaca-git master
+#download \
+#  "v0.99.beta19.tar.gz" \
+#  "libcaca-0.99.beta19.tar.gz" \
+#  "2e1ed59dc3cb2f69d3d98fd0e6a205b4" \
+#  "https://github.com/cacalabs/libcaca/archive/"
+do_git_checkout https://github.com/cacalabs/libcaca.git "$BUILD_DIR"/libcaca-git master
 
-download \
-  "master.tar.gz" \
-  "libilbc-master.tar.gz" \
-  "nil" \
-  "https://github.com/TimothyGu/libilbc/archive/"
+#download \
+#  "master.tar.gz" \
+#  "libilbc-master.tar.gz" \
+#  "nil" \
+#  "https://github.com/TimothyGu/libilbc/archive/"
+do_git_checkout https://github.com/TimothyGu/libilbc.git "$BUILD_DIR"/libilbc-git master
 
 do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git master
 
@@ -559,30 +546,36 @@ download \
   "" \
   "69784ebd917413d8592688ae86d8185f" \
   "http://downloads.xvid.org/downloads/"
+#svn checkout http://svn.xvid.org/trunk/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
 
-download \
-  "x264-master.tar.gz" \
-  "" \
-  "nil" \
-  "https://code.videolan.org/videolan/x264/-/archive/master/"
+#download \
+#  "x264-master.tar.gz" \
+#  "" \
+#  "nil" \
+#  "https://code.videolan.org/videolan/x264/-/archive/master/"
+do_git_checkout https://code.videolan.org/videolan/x264.git "$BUILD_DIR"/x264-git master
 
-download \
-  "x265_3.2.1.tar.gz" \
-  "" \
-  "94808045a34d88a857e5eaf3f68f4bca" \
-  "https://bitbucket.org/multicoreware/x265/downloads/"
+#download \
+#  "x265_3.2.1.tar.gz" \
+#  "" \
+#  "94808045a34d88a857e5eaf3f68f4bca" \
+#  "https://bitbucket.org/multicoreware/x265/downloads/"
+rm -rf "$BUILD_DIR"/x265-git
+hg clone http://hg.videolan.org/x265 "$BUILD_DIR"/x265-git
 
 download \
   "fribidi-1.0.8.tar.bz2" \
   "" \
   "962c7d8ebaa711d4e306161dbe14aa55" \
   "https://github.com/fribidi/fribidi/releases/download/v1.0.8/"
+#do_git_checkout https://github.com/fribidi/fribidi.git "$BUILD_DIR"/fribidi-git master
 
-download \
-  "0.14.0.tar.gz" \
-  "libass-0.14.0.tar.gz" \
-  "3c84884aa0589486bded10f71829bf39" \
-  "https://github.com/libass/libass/archive/"
+#download \
+#  "0.14.0.tar.gz" \
+#  "libass-0.14.0.tar.gz" \
+#  "3c84884aa0589486bded10f71829bf39" \
+#  "https://github.com/libass/libass/archive/"
+do_git_checkout https://github.com/libass/libass.git "$BUILD_DIR"/libass-git master
 
 #download \
 #  "release-0.98b.tar.gz" \
@@ -591,17 +584,19 @@ download \
 #  "https://github.com/georgmartius/vid.stab/archive/"
 do_git_checkout https://github.com/georgmartius/vid.stab.git vid.stab-git master
 
-download \
-  "release-2.9.2.tar.gz" \
-  "zimg-release-2.9.2.tar.gz" \
-  "a3755bff6207fcca5c06e7b1b408ce2e" \
-  "https://github.com/sekrit-twc/zimg/archive/"
+#download \
+#  "release-2.9.2.tar.gz" \
+#  "zimg-release-2.9.2.tar.gz" \
+#  "a3755bff6207fcca5c06e7b1b408ce2e" \
+#  "https://github.com/sekrit-twc/zimg/archive/"
+do_git_checkout https://github.com/sekrit-twc/zimg.git "$BUILD_DIR"/zimg-git master
 
 download \
   "n4.2.2.tar.gz" \
   "ffmpeg4.2.2.tar.gz" \
   "85c99f782dd3244a8e02ea85d29ecee2" \
   "https://github.com/FFmpeg/FFmpeg/archive"
+#do_git_checkout https://github.com/FFmpeg/FFmpeg.git "$BUILD_DIR"/FFmpeg-git master
 
 [ $download_only -eq 1 ] && exit 0
 
@@ -614,13 +609,13 @@ yasm(){
     echo
     cd $BUILD_DIR/yasm*
     [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-    [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --bindir=$BIN_DIR
+    [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR #--bindir=$BIN_DIR
     make -j $jval
     make install
   fi
 }
 
-asciidoc(){
+build_asciidoc(){
 echo
 /bin/echo -e "\e[93m*** Building asciidoc (Multi Dependency) ***\e[39m"
 echo
@@ -632,31 +627,31 @@ make -j $jval
 make install
 }
 
-nasm(){
+build_nasm(){
   if [ $is_x86 -eq 1 ]; then
     echo
     /bin/echo -e "\e[93m*** Building nasm ***\e[39m"
     echo
     cd $BUILD_DIR/nasm*
     [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-    [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --bindir=$BIN_DIR
+    [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR #--bindir=$BIN_DIR
     make -j $jval
     make install
   fi
 }
 
-cmake_extract(){
+extract_cmake(){
 echo
 /bin/echo -e "\e[93m*** Extracting cmake ***\e[39m"
 echo
 cd $DOWNLOAD_DIR/
-tar --wildcards --strip-components 1 --directory=$TARGET_DIR/../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/bin/*
-tar --wildcards --strip-components 1 --directory=$TARGET_DIR/../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/doc/*
-tar --wildcards --strip-components 1 --directory=$TARGET_DIR/../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/man/*
-tar --wildcards --strip-components 1 --directory=$TARGET_DIR/../ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/share/*
+tar --wildcards --strip-components 1 --directory=$TARGET_DIR/ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/bin/*
+tar --wildcards --strip-components 1 --directory=$TARGET_DIR/ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/doc/*
+tar --wildcards --strip-components 1 --directory=$TARGET_DIR/ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/man/*
+tar --wildcards --strip-components 1 --directory=$TARGET_DIR/ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/share/*
 }
 
-ninja_extract(){
+extract_ninja(){
 echo
 /bin/echo -e "\e[93m*** Extracting ninja ***\e[39m"
 echo
@@ -664,12 +659,12 @@ cd $DOWNLOAD_DIR/
 unzip -o -d "$TARGET_DIR"/bin ninja-linux.zip
 }
 
-libffi(){
+build_libffi(){
 echo
 /bin/echo -e "\e[93m*** Building libffi ***\e[39m"
 echo
 cd $BUILD_DIR/libffi-*
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
 make -j $jval
 make install
@@ -681,7 +676,7 @@ echo
 echo
 cd $BUILD_DIR/linux-pam*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --disable-doc --enable-static --disable-shared
 make -j $jval
 make install
@@ -714,7 +709,7 @@ cp *.h $TARGET_DIR/include
 cp -R include/* $TARGET_DIR/include
 }
 
-liblzma(){
+build_liblzma(){
 echo
 /bin/echo -e "\e[93m*** Building xz to get liblzma ( Dependency) ***\e[39m"
 echo
@@ -733,16 +728,16 @@ cd $BUILD_DIR/zlib-1.2.5
 sed -i 's/"shared=1"/"shared=0"/g' ./configure
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 if [ "$platform" = "linux" ]; then
-  [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --static
+  [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --static
 elif [ "$platform" = "darwin" ]; then
-  [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --static
+  [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --static
 fi
 sed -i '/cp $(SHAREDLIBV)/d' ./Makefile
 make -j $jval
 make install
 }
 
-zlib(){
+build_zlib(){
 echo
 /bin/echo -e "\e[93m*** Building zlib-1.2.11 (Python Dependency) ***\e[39m"
 echo
@@ -757,7 +752,7 @@ make -j $jval
 make install
 }
 
-libzstd(){
+build_libzstd(){
 echo
 /bin/echo -e "\e[93m*** Building libzstd ***\e[39m"
 echo
@@ -778,7 +773,7 @@ echo
 cd $BUILD_DIR/tcl*/unix
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 ./configure --prefix=$TARGET_DIR --disable-shared --enable-64bit
-PATH="$BIN_DIR:$PATH" make -j $jval
+make -j $jval
 make install
 }
 
@@ -789,11 +784,11 @@ echo
 cd $BUILD_DIR/tk*/unix
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 ./configure --prefix=$TARGET_DIR --with-tcl=$BUILD_DIR/tcl8.6.10/unix --enable-static --disable-shared
-PATH="$BIN_DIR:$PATH" make -j $jval
+make -j $jval
 make install
 }
 
-libexpat(){
+build_libexpat(){
 echo
 /bin/echo -e "\e[93m*** Building libexpat (fontconfig Dependency) ***\e[39m"
 echo
@@ -801,22 +796,59 @@ cd $BUILD_DIR/libexpat-*/expat
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 ./buildconf.sh
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
-PATH="$BIN_DIR:$PATH" make -j $jval
+make -j $jval
 make install
 }
 
-OpenSSL(){
+build_OpenSSL_RTMP(){
+echo
+/bin/echo -e "\e[93m*** Building OpenSSL for libRTMP ***\e[39m"
+echo
+cd $BUILD_DIR/openssl-old*
+[ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+if [ "$platform" = "darwin" ]; then
+  ./Configure darwin64-x86_64-cc --prefix=$TARGET_DIR
+elif [ "$platform" = "linux" ]; then
+  ./config --prefix=$TARGET_DIR no-shared
+fi
+make -j $jval
+make install
+}
+
+build_librtmp(){
+# needs old version of openSSL
+echo
+/bin/echo -e "\e[93m*** Building librtmp ***\e[39m"
+echo
+cd $BUILD_DIR/rtmpdump-*
+cd librtmp
+[ $rebuild -eq 1 ] && make distclean || true
+# there's no configure, we have to edit Makefile directly
+if [ "$platform" = "linux" ]; then
+  sed -i "/INC=.*/d" ./Makefile # Remove INC if present from previous run.
+  sed -i "s/prefix=.*/prefix=${TARGET_DIR_SED}\nINC=-I\$(prefix)\/include/" ./Makefile
+  sed -i "s/SHARED=.*/SHARED=no/" ./Makefile
+elif [ "$platform" = "darwin" ]; then
+  sed -i "" "s/prefix=.*/prefix=${TARGET_DIR_SED}/" ./Makefile
+fi
+make install_base
+}
+
+build_OpenSSL(){
 echo
 /bin/echo -e "\e[93m*** Building OpenSSL ***\e[39m"
 echo
-cd $BUILD_DIR/openssl*
+cd $BUILD_DIR/openssl-git
+git_hard_reset
+git checkout master
+git_hard_reset
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 if [ "$platform" = "darwin" ]; then
-  PATH="$BIN_DIR:$PATH" ./Configure darwin64-x86_64-cc --prefix=$TARGET_DIR
+  ./Configure darwin64-x86_64-cc --prefix=$TARGET_DIR
 elif [ "$platform" = "linux" ]; then
-  PATH="$BIN_DIR:$PATH" ./config --prefix=$TARGET_DIR no-shared
+  ./config --prefix=$TARGET_DIR no-shared
 fi
-PATH="$BIN_DIR:$PATH" make -j $jval
+make -j $jval
 make install
 }
 
@@ -826,8 +858,8 @@ echo
 echo
 cd $BUILD_DIR/Python-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --with-system-expat --disable-shared --enable-profiling LDFLAGS="-static -static-libgcc" CFLAGS="-static" CPPFLAGS="-static" CCSHARED="" --with-ensurepip=yes # --enable-unicode=ucs4
-PATH="$BIN_DIR:$PATH" make -j $jval
+[ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --with-system-expat --disable-shared --enable-profiling LDFLAGS="-static -static-libgcc" CFLAGS="-static" CPPFLAGS="-static" CCSHARED="" --with-ensurepip=yes # --enable-unicode=ucs4
+make -j $jval
 make install
 }
 
@@ -839,7 +871,7 @@ cd $BUILD_DIR/nv-codec-headers-git
 make install "PREFIX=$TARGET_DIR" # just copies in headers
 }
 
-glib() {
+build_glib() {
 echo
 /bin/echo -e "\e[93m*** Building glib ***\e[39m"
 echo
@@ -909,40 +941,18 @@ make -j $(nproc)
 make install
 }
 
-rebuild_libcdio_paranoia() {
-echo
-/bin/echo -e "\e[93m*** Rebuilding libcdio_paranoia ***\e[39m"
-echo
-cd "$BUILD_DIR"/libcdio-paranoia-git
-git reset --hard
-git clean -f
-./autogen.sh --prefix=$TARGET_DIR --disable-shared
-make -j $(nproc)
-make install
-}
-
-# needs libxml2, freetype, fontconfig, (ANT & javac for compiling OR --disable-bdjava-jar)
-build_libbluray() {
-cd "$BUILD_DIR"/libbluray-git
-git submodule update --init
-./bootstrap
-./configure --prefix=$TARGET_DIR --disable-shared --disable-bdjava-jar
-make -j $(nproc)
-make install
-}
-
-libmysofa() {
+build_libmysofa() {
 echo
 /bin/echo -e "\e[93m***  Building libmysofa ***\e[39m"
 echo
 cd $BUILD_DIR/libmysofa-*
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_TESTS=0
+cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_TESTS=0
 apply_patch file://$PATCH_DIR/libmysofa.patch -p1
 make -j $jval
 make install
 }
 
-ALSAlib(){
+build_ALSAlib(){
 echo
 /bin/echo -e "\e[93m***  Building ALSAlib ***\e[39m"
 echo
@@ -959,30 +969,33 @@ make -j $jval
 make install
 }
 
-voamrwbenc(){
+build_voamrwbenc(){
 echo
 /bin/echo -e "\e[93m*** Building vo-amrwbenc... ***\e[39m"
 echo
 cd $BUILD_DIR/vo-amrwbenc-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static
+#sed -i.bak "s/AM_INIT_AUTOMAKE(\[/AM_INIT_AUTOMAKE(\[subdir-objects /g" ./configure.ac
+[ ! -f configure ] && autoreconf -fiv
+./configure --prefix=$TARGET_DIR --disable-shared --enable-static #--bindir="$BIN_DIR"
 make -j $jval
 make install
 }
 
-opencoreamr(){
+build_opencoreamr(){
 echo
 /bin/echo -e "\e[93m*** Building opencore-amr... ***\e[39m"
 echo
 cd $BUILD_DIR/opencore-amr*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+#sed -i.bak "s/AM_INIT_AUTOMAKE(\[/AM_INIT_AUTOMAKE(\[subdir-objects /g" ./configure.ac
 [ ! -f configure ] && autoreconf -fiv
-./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static
+./configure --prefix=$TARGET_DIR --disable-shared --enable-static #--bindir="$BIN_DIR"
 make -j $jval
 make install
 }
 
-fdkaac(){
+build_fdkaac(){
 echo
 /bin/echo -e "\e[93m*** Building fdk-aac ***\e[39m"
 echo
@@ -994,7 +1007,7 @@ make -j $jval
 make install
 }
 
-mp3lame(){
+build_mp3lame(){
 echo
 /bin/echo -e "\e[93m*** Building mp3lame ***\e[39m"
 echo
@@ -1002,12 +1015,12 @@ cd $BUILD_DIR/lame*
 # The lame build script does not recognize aarch64, so need to set it manually
 uname -a | grep -q 'aarch64' && lame_build_target="--build=arm-linux" || lame_build_target=''
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-nasm --disable-shared $lame_build_target
+[ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --enable-nasm --disable-shared $lame_build_target
 make -j 1
 make install
 }
 
-opus(){
+build_opus(){
 echo
 /bin/echo -e "\e[93m*** Building opus ***\e[39m"
 echo
@@ -1020,47 +1033,31 @@ make install
 sed -i "s/Version: unknown/Version: 1.3.1/g" $TARGET_DIR/lib/pkgconfig/opus.pc
 }
 
-libvpx(){
+build_libvpx(){
 echo
 /bin/echo -e "\e[93m*** Building libvpx ***\e[39m"
 echo
 cd $BUILD_DIR/libvpx*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-examples --disable-unit-tests --enable-pic --enable-vp9-highbitdepth --enable-vp8 --enable-vp9 --enable-better-hw-compatibility
-PATH="$BIN_DIR:$PATH" make -j $jval
+[ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --disable-examples --disable-unit-tests --enable-pic --enable-vp9-highbitdepth --enable-vp8 --enable-vp9 --enable-better-hw-compatibility
+make -j $jval
 make install
 }
 
-librtmp(){
-echo
-/bin/echo -e "\e[93m*** Building librtmp ***\e[39m"
-echo
-cd $BUILD_DIR/rtmpdump-*
-cd librtmp
-[ $rebuild -eq 1 ] && make distclean || true
-# there's no configure, we have to edit Makefile directly
-if [ "$platform" = "linux" ]; then
-  sed -i "/INC=.*/d" ./Makefile # Remove INC if present from previous run.
-  sed -i "s/prefix=.*/prefix=${TARGET_DIR_SED}\nINC=-I\$(prefix)\/include/" ./Makefile
-  sed -i "s/SHARED=.*/SHARED=no/" ./Makefile
-elif [ "$platform" = "darwin" ]; then
-  sed -i "" "s/prefix=.*/prefix=${TARGET_DIR_SED}/" ./Makefile
-fi
-make install_base
-}
-
-libsoxr(){
+build_libsoxr(){
 echo
 /bin/echo -e "\e[93m*** Building libsoxr ***\e[39m"
 echo
 cd $BUILD_DIR/soxr-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DWITH_OPENMP=0 -DBUILD_TESTS=0 -DBUILD_EXAMPLES=0
+mkdir -pv build
+cd build
+cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DWITH_OPENMP=0 -DBUILD_TESTS=0 -DBUILD_EXAMPLES=0 ..
 make -j $jval
 make install
 }
 
-libflite() {
+build_libflite() {
 echo
 /bin/echo -e "\e[93m*** Building libflite ***\e[39m"
 echo
@@ -1081,17 +1078,17 @@ export CFLAGS="-I${TARGET_DIR}/include $LDFLAGS"
 make install
 }
 
-libsnappy() {
+build_libsnappy() {
 echo
 /bin/echo -e "\e[93m*** Building libsnappy ***\e[39m"
 echo
-cd $BUILD_DIR/snappy-git
+cd $BUILD_DIR/snappy-*
 cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DCMAKE_BUILD_TYPE=Release -DSNAPPY_BUILD_TESTS=OFF # extra params from deadsix27 and from new cMakeLists.txt content
 make -j $jval
 make install
 }
 
-vamp_plugin() {
+build_vamp_plugin() {
 echo
 /bin/echo -e "\e[93m*** Building vamp_plugin ***\e[39m"
 echo
@@ -1104,7 +1101,7 @@ apply_patch file://$PATCH_DIR/vamp-plugin-sdk-2.7.1_static-lib.diff -p0
 make install-static # No need for 'do_make_install', because 'install-static' already has install-instructions.
 }
 
-fftw() {
+build_fftw() {
 echo
 /bin/echo -e "\e[93m*** Building fftw ***\e[39m"
 echo
@@ -1114,13 +1111,13 @@ make -j $jval
 make install
 }
 
-libsamplerate() {
+build_libsamplerate() {
 # I think this didn't work with ubuntu 14.04 [too old automake or some odd] :|
 echo
 /bin/echo -e "\e[93m*** Building libsamplerate ***\e[39m"
 echo
 cd $BUILD_DIR/libsamplerate-git
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --disable-shared --enable-static
 make -j $jval
 make install
@@ -1128,54 +1125,54 @@ make install
   # rubberband can use this, but uses speex bundled by default [any difference? who knows!]
 }
 
-libogg(){
+build_libogg(){
 echo
 /bin/echo -e "\e[93m*** Building libogg ***\e[39m"
 echo
 cd $BUILD_DIR/ogg*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --disable-shared
 make -j $jval
 make install
 }
 
-libflac(){
+build_libflac(){
 echo
 /bin/echo -e "\e[93m*** Building libflac ***\e[39m"
 echo
 cd $BUILD_DIR/flac-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./autogen.sh
-PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-shared --disable-thorough-tests
+[ ! -f configure ] && ./autogen.sh
+./configure --prefix=$TARGET_DIR --disable-shared --disable-thorough-tests
 make -j $jval
 make install
 }
 
-libvorbis(){
+build_libvorbis(){
 echo
 /bin/echo -e "\e[93m*** Building libvorbis ***\e[39m"
 echo
 cd $BUILD_DIR/vorbis*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --disable-shared --disable-docs --disable-examples --disable-oggtest
 make -j $jval
 make install
 }
 
-libspeexdsp() {
+build_libspeexdsp() {
 echo
 /bin/echo -e "\e[93m*** Building libspeexDSP ***\e[39m"
 echo
 cd $BUILD_DIR/speexdsp-git
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --disable-shared --enable-static --disable-examples
 make -j $jval
 make install
 }
 
-libspeex(){
+build_libspeex(){
 echo
 /bin/echo -e "\e[93m*** Building libspeex ***\e[39m"
 echo
@@ -1183,7 +1180,7 @@ cd $BUILD_DIR/speex-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 export SPEEXDSP_CFLAGS="-I$TARGET_DIR/include"
 export SPEEXDSP_LIBS="-L$TARGET_DIR/lib -lspeexdsp" # 'configure' somehow can't find SpeexDSP with 'pkg-config'.
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --disable-shared --disable-binaries
 make -j $jval
 make install
@@ -1191,13 +1188,13 @@ unset SPEEXDSP_CFLAGS
 unset SPEEXDSP_LIBS
 }
 
-libsndfile(){
+build_libsndfile(){
 echo
 /bin/echo -e "\e[93m*** Building libsndfile ***\e[39m"
 echo
 cd $BUILD_DIR/libsndfile-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --disable-shared --enable-experimental --disable-full-suite # --disable-sqlite --disable-external-libs
 make -j $jval
 make install
@@ -1209,7 +1206,7 @@ else
 fi
 }
 
-librubberband() {
+build_librubberband() {
 echo
 /bin/echo -e "\e[93m*** Building librubberband ***\e[39m"
 echo
@@ -1220,30 +1217,34 @@ make install-static # AR=${cross_prefix}ar # No need for 'do_make_install', beca
     sed -i.bak 's/-lrubberband.*$/-lrubberband -lfftw3 -lsamplerate -lstdc++/' $TARGET_DIR/lib/pkgconfig/rubberband.pc
 }
 
-libtwolame(){
+build_libtwolame(){
 echo
 /bin/echo -e "\e[93m*** Building libtwolame ***\e[39m"
 echo
 cd $BUILD_DIR/twolame-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-#./autogen.sh --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static 
-./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --disable-shared --enable-static 
+if [ ! -f configure ]; then
+  ./autogen.sh --prefix=$TARGET_DIR --disable-shared --enable-static #--bindir="$BIN_DIR"
+else
+  ./configure --prefix=$TARGET_DIR --disable-shared --enable-static #--bindir="$BIN_DIR"
+fi
 make -j $jval
 make install
 }
 
-libtheora(){
+build_libtheora(){
 echo
 /bin/echo -e "\e[93m*** Building libtheora ***\e[39m"
 echo
 cd $BUILD_DIR/libtheora-*
 sed -i 's/png_\(sizeof\)/\1/g' examples/png2theora.c
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --disable-shared --enable-static --disable-oggtest --disable-vorbistest --with-ogg-includes="$TARGET_DIR/include" --with-ogg-libraries="$TARGET_DIR/build/lib" --with-vorbis-includes="$TARGET_DIR/include" --with-vorbis-libraries="$TARGET_DIR/build/lib" --disable-doc --disable-examples --disable-spec
 make -j $jval
 make install
 }
 
-PulseAudio(){
+build_PulseAudio(){
 echo
 /bin/echo -e "\e[93m*** Building PulseAudio ***\e[39m"
 echo
@@ -1257,7 +1258,7 @@ make
 make install
 }
 
-GIFlib(){
+build_GIFlib(){
 echo
 /bin/echo -e "\e[93m*** Building GIFlib (imlib2 and libwebp Dependency) ***\e[39m"
 echo
@@ -1272,17 +1273,17 @@ make install PREFIX=$TARGET_DIR
 #cp -v -R doc/* $TARGET_DIR/share/doc/giflib-5.2.1
 }
 
-libjpegturbo(){
+build_libjpegturbo(){
 echo
 /bin/echo -e "\e[93m*** Building libjpeg-turbo ***\e[39m"
 echo
 cd $BUILD_DIR/libjpeg-turbo-*
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DENABLE_SHARED=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include -DWITH_12BIT=1
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$TARGET_DIR -DENABLE_SHARED=0 -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib -DCMAKE_INSTALL_INCLUDEDIR=$TARGET_DIR/include -DWITH_12BIT=1
 make -j $jval
 make install
 }
 
-libPNG(){
+build_libPNG(){
 echo
 /bin/echo -e "\e[93m*** Building libPNG ***\e[39m"
 echo
@@ -1292,7 +1293,7 @@ make -j $jval
 make install
 }
 
-libID3tag(){
+build_libID3tag(){
 echo
 /bin/echo -e "\e[93m*** Building libID3tag (imlib2 Dependency) ***\e[39m"
 echo
@@ -1303,13 +1304,13 @@ make -j $jval
 make install
 }
 
-libwebp(){
+build_libwebp(){
 echo
 /bin/echo -e "\e[93m*** Building libwebp ***\e[39m"
 echo
 cd $BUILD_DIR/libwebp*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 export LIBPNG_CONFIG="$TARGET_DIR/bin/libpng16-config --static" # LibPNG somehow doesn't get autodetected.
 ./configure --prefix=$TARGET_DIR --disable-shared --enable-libwebpdecoder --enable-libwebpmux --enable-libwebpextras # --with-pnglibdir=$TARGET_DIR/lib --with-pngincludedir=$TARGET_DIR/include
 make -j $jval
@@ -1317,13 +1318,14 @@ make install
 }
 
 # No jbig and zstd, else 'tesseract not found using pkg-config'
-libTIFF(){
+build_libTIFF(){
 echo
 /bin/echo -e "\e[93m*** Building libTIFF ***\e[39m"
 echo
 mv "$TARGET_DIR/lib/pkgconfig/libzstd.pc" "$TARGET_DIR/lib/pkgconfig/libzstd.pc.bak"
 mv "$TARGET_DIR/include/zstd.h" "$TARGET_DIR/include/zstd.h.bak"
 cd $BUILD_DIR/tiff-*
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --disable-shared
 make -j $jval
 make install
@@ -1332,13 +1334,13 @@ mv "$TARGET_DIR/include/zstd.h.bak" "$TARGET_DIR/include/zstd.h"
 #sed -i.bak 's/-ltiff.*$/-ltiff -ljpeg -ljbig -lzstd -lz -llzma -lm/' $PKG_CONFIG_PATH/libtiff-4.pc # static deps
 }
 
-libwebpRB(){
+rebuild_libwebp(){
 echo
 /bin/echo -e "\e[93m*** ReBuilding libwebp ***\e[39m"
 echo
 cd $BUILD_DIR/libwebp*
 make distclean
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --disable-shared --enable-libwebpdecoder --enable-libwebpmux --enable-libwebpextras # --with-pnglibdir=$TARGET_DIR/lib --with-pngincludedir=$TARGET_DIR/include
 make -j $jval
 make install
@@ -1366,7 +1368,7 @@ meson --prefix=$TARGET_DIR .. && ninja
 ninja install
 }
 
-libXML(){
+build_libXML(){
 echo
 /bin/echo -e "\e[93m*** Building libXML ***\e[39m"
 echo
@@ -1375,12 +1377,16 @@ cd $BUILD_DIR/libxml*
     if [ ! -f libxml.h.bak ]; then # Otherwise you'll get "libxml.h:...: warning: "LIBXML_STATIC" redefined". Not an error, but still.
       sed -i.bak "/NOLIBTOOL/s/.*/& \&\& !defined(LIBXML_STATIC)/" libxml.h
     fi
-[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-shared --with-history --with-python=no --with-ftp=no --with-http=no #--with-python=$TARGET_DIR/bin/python3
-PATH="$BIN_DIR:$PATH" make -j $jval
+if [ ! -f configure ]; then
+  ./autogen.sh --prefix=$TARGET_DIR --disable-shared --with-history --with-python=no --with-ftp=no --with-http=no
+else
+  [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --disable-shared --with-history --with-python=no --with-ftp=no --with-http=no #--with-python=$TARGET_DIR/bin/python3
+fi
+make -j $jval
 make install
 }
 
-FreeType2(){
+build_FreeType2(){
 echo
 /bin/echo -e "\e[93m*** Building FreeType2 (libass dependency) ***\e[39m"
 echo
@@ -1388,29 +1394,33 @@ cd $BUILD_DIR/freetype*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 #sed -ri "s:.*(AUX_MODULES.*valid):\1:" modules.cfg
 #sed -r "s:.*(#.*SUBPIXEL_RENDERING) .*:\1:" -i include/freetype/config/ftoption.h
-[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --without-harfbuzz --with-bzip2 
-PATH="$BIN_DIR:$PATH" make -j $jval
+[ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --without-harfbuzz --with-bzip2 
+make -j $jval
 make install
 }
 
-FontConfig(){
+build_FontConfig(){
 echo
 /bin/echo -e "\e[93m*** Building FontConfig ***\e[39m"
 echo
 cd $BUILD_DIR/fontconfig*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --enable-iconv --disable-docs --with-libiconv #  --enable-libxml2 # Use Libxml2 instead of Expat.
-PATH="$BIN_DIR:$PATH" make -j $jval
+if [ ! -f configure ]; then
+  ./autogen.sh --prefix=$TARGET_DIR --enable-static --disable-shared --enable-iconv --disable-docs --with-libiconv
+else
+  [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --enable-iconv --disable-docs --with-libiconv #  --enable-libxml2 # Use Libxml2 instead of Expat.
+fi
+make -j $jval
 make install
 }
 
-harfbuzz(){
+build_harfbuzz(){
 echo
 /bin/echo -e "\e[93m*** Building harfbuzz (libass dependency) ***\e[39m"
 echo
 cd $BUILD_DIR/harfbuzz-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-PATH="$BIN_DIR:$PATH" ./autogen.sh --prefix=$TARGET_DIR --enable-static --disable-shared --with-freetype=yes -with-icu=no # --with-fontconfig=no
+./autogen.sh --prefix=$TARGET_DIR --enable-static --disable-shared --with-freetype=yes -with-icu=no # --with-fontconfig=no
 make -j $jval
 make install
 #  sed -i.bak 's/-lharfbuzz.*/-lharfbuzz -lfreetype/' "$TARGET_DIR/lib/pkgconfig/harfbuzz.pc"
@@ -1419,15 +1429,14 @@ make install
 #  sed -i.bak 's/libfreetype.la -lbz2/libfreetype.la -lharfbuzz -lbz2 \/home\/tec\/DEV\/ffmpeg-static\/target\/lib\/libharfbuzz-subset.la -lharfbuzz -lbz2/' "$TARGET_DIR/lib/libharfbuzz.la"
 }
 
-FreeType2RB(){
+rebuild_FreeType2(){
 echo
 /bin/echo -e "\e[93m*** ReBuilding FreeType2 after HarfBuzz ***\e[39m"
 echo
 cd $BUILD_DIR/freetype*
 #make distclean
-#[ ! -f config.status ] && PATH="$BIN_DIR:$PATH"
-./configure --prefix=$TARGET_DIR --enable-static --disable-shared --with-harfbuzz --with-bzip2
-#PATH="$BIN_DIR:$PATH" make -j $jval
+#[ ! -f config.status ] ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --with-harfbuzz --with-bzip2
+#make -j $jval
 make install
   sed -i.bak 's/-lfreetype.*/-lfreetype -lharfbuzz/' "$TARGET_DIR/lib/pkgconfig/freetype2.pc"
   sed -i.bak 's/libfreetype.la -lbz2/libfreetype.la -lharfbuzz -lbz2/' "$TARGET_DIR/lib/libfreetype.la"
@@ -1435,87 +1444,86 @@ make install
   sed -i.bak 's/libfreetype.la -lbz2/libfreetype.la -lharfbuzz -lbz2/' "$TARGET_DIR/lib/libharfbuzz.la"
 }
 
-openjpeg(){
+build_openjpeg(){
 echo
 /bin/echo -e "\e[93m*** Building openjpeg ***\e[39m"
 echo
 cd $BUILD_DIR/openjpeg-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DENABLE_STATIC_RUNTIME=1 -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_CODEC=0 # -DBUILD_PKGCONFIG_FILES=on -DWITH_ASTYLE=ON -DBUILD\_SHARED\_LIBS:bool=off -DBUILD_THIRDPARTY:BOOL=ON -DBUILD_SHARED_LIBS:bool=off -DBUILD_STATIC_LIBS:bool=on -DBUILD_PKGCONFIG_FILES:bool=on -DCMAKE_BUILD_TYPE:string="Release"
-# -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS:bool=off -DBUILD_STATIC_LIBS:bool=on -DBUILD_PKGCONFIG_FILES:bool=on -DCMAKE_BUILD_TYPE:string="Release"
+cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_CODEC=0 # -DBUILD_PKGCONFIG_FILES=on -DWITH_ASTYLE=ON -DBUILD\_SHARED\_LIBS:bool=off -DBUILD_THIRDPARTY:BOOL=ON -DBUILD_SHARED_LIBS:bool=off -DBUILD_STATIC_LIBS:bool=on -DBUILD_PKGCONFIG_FILES:bool=on -DCMAKE_BUILD_TYPE:string="Release"
 make -j $jval
 make install
 }
 
-libleptonica() {
+build_libleptonica() {
 #  build_libjpeg_turbo
 echo
 /bin/echo -e "\e[93m*** Building libleptonica ***\e[39m"
 echo
 cd $BUILD_DIR/leptonica-*
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --without-libopenjpeg # never could quite figure out how to get it to work with jp2 stuffs...I think OPJ_STATIC or something, see issue for tesseract
 make -j $jval
 make install
 }
 
-lensfun() {
+build_lensfun() {
 # build_glib
 echo
 /bin/echo -e "\e[93m*** Building lensfun ***\e[39m"
 echo
 cd $BUILD_DIR/lensfun-*
 export CMAKE_STATIC_LINKER_FLAGS='-lws2_32 -pthread'
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_STATIC=on -DCMAKE_INSTALL_DATAROOTDIR=$TARGET_DIR
+cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_STATIC=on -DCMAKE_INSTALL_DATAROOTDIR=$TARGET_DIR
 make -j $jval
 make install
 sed -i.bak 's/-llensfun/-llensfun -lstdc++/' "$PKG_CONFIG_PATH/lensfun.pc"
 unset CMAKE_STATIC_LINKER_FLAGS
 }
 
-libtesseract() {
+build_libtesseract() {
 # build_libleptonica
 # build_libtiff # no disable configure option for this in tesseract? odd...
 echo
 /bin/echo -e "\e[93m*** Building libtesseract ***\e[39m"
 echo
 cd $BUILD_DIR/tesseract-*
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
 make -j $jval
 make install
-#    if [[ $compiler_flavors != "native"  ]]; then
-#      sed -i.bak 's/-ltesseract.*$/-ltesseract -lstdc++ -lws2_32 -llept -ltiff -llzma -ljpeg -lz/' $PKG_CONFIG_PATH/tesseract.pc # why does it needs winsock? LOL plus all of libtiff's <sigh>
-#    else
-sed -i.bak 's/-ltesseract.*$/-ltesseract -lstdc++ -llept -ltiff -llzma -ljpeg -lz -lgomp/' $PKG_CONFIG_PATH/tesseract.pc # see above, gomp for linux native
-#    fi
+sed -i.bak 's/-ltesseract.*$/-ltesseract -lstdc++ -llept -ltiff -llzma -ljpeg -lz -lgomp/' $PKG_CONFIG_PATH/tesseract.pc # see above, gomp for }
 }
 
-imlib2(){
+build_imlib2(){
 echo
 /bin/echo -e "\e[93m*** Building imlib2 (libcaca dependency)***\e[39m"
 echo
 cd $BUILD_DIR/imlib2-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
-PATH="$BIN_DIR:$PATH" make -j $jval
+if [ ! -f configure ]; then
+  ./autogen.sh --prefix=$TARGET_DIR --enable-static --disable-shared
+else
+  [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
+fi
+make -j $jval
 make install
 }
 
-libcaca(){
+build_libcaca(){
 echo
 /bin/echo -e "\e[93m*** Building libcaca... ***\e[39m"
 echo
 cd $BUILD_DIR/libcaca-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-sed -i 's/"$amvers" "<" "1.5"/"$amvers" "<" "1.05"/g' ./bootstrap
+#sed -i 's/"$amvers" "<" "1.5"/"$amvers" "<" "1.05"/g' ./bootstrap
 ./bootstrap
-./configure --prefix=$TARGET_DIR --bindir="$BIN_DIR" --enable-static --disable-shared --disable-slang --disable-doc --disable-ruby --disable-csharp --disable-java --disable-cxx --disable-ncurses --disable-x11 #--disable-python --disable-cocoa
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared --disable-slang --disable-doc --disable-ruby --disable-csharp --disable-java --disable-cxx --disable-ncurses --disable-x11 #--disable-python --disable-cocoa --bindir="$BIN_DIR" 
 make -j $jval
 make install
 }
 
-libilbc(){
+build_libilbc(){
 echo
 /bin/echo -e "\e[93m*** Building libilbc ***\e[39m"
 echo
@@ -1528,19 +1536,32 @@ make -j $jval
 make install
 }
 
-frei0r(){
+build_frei0r(){
 echo
 /bin/echo -e "\e[93m*** Building frei0r ***\e[39m"
 echo
 cd $BUILD_DIR/frei0r-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --prefix=$TARGET_DIR --enable-static # --disable-shared
 make -j $jval
 make install
 }
 
-libaom() {
+# needs libxml2, freetype, fontconfig, (ANT & javac for compiling OR --disable-bdjava-jar)
+build_libbluray() {
+echo
+/bin/echo -e "\e[93m*** Building libbluray ***\e[39m"
+echo
+cd "$BUILD_DIR"/libbluray-git
+git submodule update --init
+./bootstrap
+./configure --prefix=$TARGET_DIR --disable-shared --disable-bdjava-jar
+make -j $(nproc)
+make install
+}
+
+build_libaom() {
 echo
 /bin/echo -e "\e[93m*** Building libaom ***\e[39m"
 echo
@@ -1552,84 +1573,88 @@ make -j $jval
 make install
 }
 
-dav1d() {
+build_dav1d() {
 echo
 /bin/echo -e "\e[93m*** Building dav1d ***\e[39m"
 echo
 cd $BUILD_DIR/libdav1d-*
 mkdir -pv build
 cd build/
-PATH="$BIN_DIR:$PATH" ${BUILD_DIR}/meson-git/meson.py --prefix=${TARGET_DIR} --libdir=${TARGET_DIR}/lib --buildtype=release --strip --default-library=static ..
+${BUILD_DIR}/meson-git/meson.py --prefix=${TARGET_DIR} --libdir=${TARGET_DIR}/lib --buildtype=release --strip --default-library=static ..
 ninja -j 1
 ninja install
 #cp build/src/libdav1d.a $TARGET_DIR/lib || exit 1 # avoid 'run ranlib' weird failure, possibly older meson's https://github.com/mesonbuild/meson/issues/4138 :|
 }
 
-Xvid(){
+build_Xvid(){
 echo
 /bin/echo -e "\e[93m*** Building Xvid ***\e[39m"
 echo
-cd $BUILD_DIR/xvidcore/build/generic
+cd $BUILD_DIR/xvid*/build/generic
 #sed -i 's/^LN_S=@LN_S@/& -f -v/' platform.inc.in
 #sed -i '/AC_MSG_CHECKING(for platform specific LDFLAGS\/CFLAGS)/{n;s/.*/SPECIFIC_LDFLAGS="-static"/}' ./configure.in
 #sed -i '/SPECIFIC_LDFLAGS="-static"/{n;s/.*/SPECIFIC_CFLAGS="-static"/}' ./configure.in
 apply_patch file://$PATCH_DIR/xvidcore-1.3.4_static-lib.diff -p0
-PATH="$BIN_DIR:$PATH" ./bootstrap.sh
-PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-shared
-PATH="$BIN_DIR:$PATH" make -j $jval
+./bootstrap.sh
+./configure --prefix=$TARGET_DIR --disable-shared
+make -j $jval
 make install
 #chmod -v 755 $TARGET_DIR/lib/libxvidcore.so.4.3
 #install -v -m755 -d $TARGET_DIR/share/doc/xvidcore-1.3.5/examples && install -v -m644 ../../doc/* $TARGET_DIR/share/doc/xvidcore-1.3.5 && install -v -m644 ../../examples/* $TARGET_DIR/share/doc/xvidcore-1.3.5/examples
 }
 
-x264(){
+build_x264(){
 echo
 /bin/echo -e "\e[93m*** Building x264 ***\e[39m"
 echo
 cd $BUILD_DIR/x264*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-[ ! -f config.status ] && PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --enable-static --disable-opencl --enable-pic
-PATH="$BIN_DIR:$PATH" make -j $jval
+[ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --enable-static --disable-opencl --enable-pic
+make -j $jval
 make install
 }
 
-x265(){
+build_x265(){
 echo
 /bin/echo -e "\e[93m*** Building x265 ***\e[39m"
 echo
 cd $BUILD_DIR/x265*
 cd build/linux
 [ $rebuild -eq 1 ] && find . -mindepth 1 ! -name 'make-Makefiles.bash' -and ! -name 'multilib.sh' -exec rm -r {} +
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DENABLE_SHARED:BOOL=OFF -DSTATIC_LINK_CRT:BOOL=ON -DENABLE_CLI:BOOL=OFF ../../source
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DENABLE_SHARED:BOOL=OFF -DSTATIC_LINK_CRT:BOOL=ON -DENABLE_CLI:BOOL=OFF ../../source
 sed -i 's/-lgcc_s/-lgcc_eh/g' x265.pc
 make -j $jval
 make install
 }
 
-fribidi(){
+build_fribidi(){
 echo
 /bin/echo -e "\e[93m*** Building fribidi (libass dependency)***\e[39m"
 echo
 cd $BUILD_DIR/fribidi-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./configure --prefix=$TARGET_DIR --disable-shared --enable-static --disable-debug --disable-deprecated
+if [ ! -f configure ]; then
+  ./autogen.sh --prefix=$TARGET_DIR --disable-shared --enable-static --disable-debug --disable-deprecated
+else
+  ./configure --prefix=$TARGET_DIR --disable-shared --enable-static --disable-debug --disable-deprecated
+fi
 make -j $jval
 make install
 }
 
-libass(){
+build_libass(){
 echo
 /bin/echo -e "\e[93m*** Building libass ***\e[39m"
 echo
 cd $BUILD_DIR/libass-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-PATH="$BIN_DIR:$PATH" ./autogen.sh
-PATH="$BIN_DIR:$PATH" ./configure --prefix=$TARGET_DIR --disable-shared
-PATH="$BIN_DIR:$PATH" make -j $jval
+[ ! -f configure ] && ./autogen.sh
+./configure --prefix=$TARGET_DIR --disable-shared
+make -j $jval
 make install
 }
 
-libvidstab(){
+build_libvidstab(){
 echo
 /bin/echo -e "\e[93m*** Building libvidstab ***\e[39m"
 echo
@@ -1644,24 +1669,24 @@ cd $BUILD_DIR/vid.stab-*
 #elif [ "$platform" = "darwin" ]; then
 #  sed -i "" "s/vidstab SHARED/vidstab STATIC/" ./CMakeLists.txt
 #fi
-PATH="$BIN_DIR:$PATH" cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR"
+cmake -G "Unix Makefiles" -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX="$TARGET_DIR"
 make -j $jval
 make install
 }
 
-zimg(){
+build_zimg(){
 echo
 /bin/echo -e "\e[93m*** Building zimg ***\e[39m"
 echo
-cd $BUILD_DIR/zimg-release-*
+cd $BUILD_DIR/zimg-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-./autogen.sh
+[ ! -f configure ] && ./autogen.sh
 ./configure --enable-static  --prefix=$TARGET_DIR --disable-shared
 make -j $jval
 make install
 }
 
-ffmpeg(){
+build_ffmpeg(){
 echo
 /bin/echo -e "\e[93m*** Building FFmpeg ***\e[39m"
 date +%H:%M:%S
@@ -1670,16 +1695,12 @@ cd $BUILD_DIR/FFmpeg*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 
 if [ "$platform" = "linux" ]; then
-  [ ! -f config.status ] && PATH="$BIN_DIR:$PATH" \
-  PKG_CONFIG_PATH="$TARGET_DIR/lib/pkgconfig" ./configure \
+  [ ! -f config.status ] && ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.7s \
-    --extra-cflags="-I$TARGET_DIR/include" \
-    --extra-ldflags="-L$TARGET_DIR/lib" \
+    --extra-version=Tec-3.8s \
     --extra-libs="-lpthread -lm -lz -ldl -lharfbuzz" \
     --extra-ldexeflags="-static" \
-    --bindir="$BIN_DIR" \
     --enable-pic \
     --enable-ffplay \
     --enable-gpl \
@@ -1733,6 +1754,10 @@ if [ "$platform" = "linux" ]; then
     --enable-libxvid \
     --enable-libzimg \
     --enable-lzma \
+    --enable-cuda \
+  --disable-cuda-nvcc \
+    --enable-cuvid \
+    --enable-ffnvcodec \
     --enable-nvenc \
     --enable-openssl \
   --disable-sndio \
@@ -1742,7 +1767,7 @@ if [ "$platform" = "linux" ]; then
   --disable-xlib \
     --enable-zlib
 # Not working yet
-#    
+#
 # ---------------
 # Not tested yet
 #
@@ -1796,7 +1821,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.7s \
+    --extra-version=Tec-3.8s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \
@@ -1832,7 +1857,7 @@ elif [ "$platform" = "darwin" ]; then
     --enable-openssl
 fi
 
-PATH="$BIN_DIR:$PATH" make -j $jval
+make -j $jval
 make install
 make distclean
 }
@@ -1840,101 +1865,102 @@ make distclean
 deps(){
 spd-say --rate -25 "Starting dependencies"
 #yasm
-asciidoc
-nasm
-cmake_extract
-ninja_extract
-libffi
+build_asciidoc
+build_nasm
+extract_cmake
+extract_ninja
+build_libffi
 #linuxPAM
 #libcap
-liblzma
-zlib
-libzstd
+build_liblzma
+build_zlib
+build_libzstd #wants zlib, lzma
 #tcl #tkinter dependecy
 #tkinter #python dependency
-libexpat
+build_libexpat #
 #Python
-build_nv_headers
-glib
-OpenSSL # Should be before Python. Wants ZLIB
-build_libcdio
-build_libcdio_paranoia
-build_vcdimager
-rebuild_libcdio
+build_nv_headers #
+build_glib #wants python, iconv, zlib, libffi, libmount, libFAM, libELF
+build_OpenSSL_RTMP # Should be before Python. Wants ZLIB
+build_librtmp # wants old openssl, 1.0.2u works
+#build_OpenSSL # Should be before Python. Wants ZLIB
+build_libcdio #wants icovn, ncurses, libvcd
+build_libcdio_paranoia #wants libcdio
+build_vcdimager #wants libpopt, libcdio, libiso9660, libxml
+rebuild_libcdio #wants icovn, ncurses, libvcd
 }
 
 adeps(){
 spd-say --rate -25 "Starting audio dependencies"
-libmysofa # wants zlib
-ALSAlib
-voamrwbenc
-opencoreamr
-fdkaac
-mp3lame
-opus
-libvpx
-librtmp # wants openssl
-libsoxr
-libflite
-libsnappy # wants zlib
-vamp_plugin #
-fftw # wants f77 compiler
-libogg # 
-libflac # wants ogg, XMMS
-libvorbis # needs ogg
-libspeexdsp
-libspeex # needs libspeexdsp
-libsndfile # wants flac, ogg, speex, vorbis, opus, sqlite3, alsa
-libsamplerate # wants libsndfile, alsa, fftw3
-librubberband # wants libsndfile, fftw, samplerate
-libtwolame # wants libsndfile
-libtheora # needs ogg, wants vorbis, png
-#PulseAudio #Doesn't work yet
+build_libmysofa # wants zlib
+build_ALSAlib #
+build_voamrwbenc #
+build_opencoreamr #
+build_fdkaac #
+build_mp3lame #wants ncurses, iconv. GTK
+build_opus #
+build_libvpx #
+build_libsoxr #
+build_libflite #
+build_libsnappy # wants zlib
+build_vamp_plugin #
+build_fftw # wants f77 compiler
+build_libogg # 
+build_libflac # wants ogg, XMMS
+build_libvorbis # needs ogg
+build_libspeexdsp
+build_libspeex # needs libspeexdsp
+build_libsndfile # wants flac, ogg, speex, vorbis, opus, sqlite3, alsa
+build_libsamplerate # wants libsndfile, alsa, fftw3
+build_librubberband # wants libsndfile, fftw, samplerate
+build_libtwolame # wants libsndfile
+build_libtheora # needs ogg, wants vorbis, png
+#build_PulseAudio #Doesn't work yet
 #sdl1
 }
 
 pdeps(){
 spd-say --rate -25 "Starting picture dependencies"
-GIFlib #
-libjpegturbo #
-libPNG #wants zlib
-libID3tag #wants zlib,
-libwebp #wants giflib, jpeg, libtiff, wic, sdl, png, glut, opengl
-libTIFF #wants lzw, zlib, jpeg, jbig, lzma, zstd, webp, glut, opengl
-libwebpRB #wants giflib, jpeg, libtiff, wic, sdl, png, glut, opengl
+build_GIFlib #
+build_libjpegturbo #
+build_libPNG #wants zlib
+build_libID3tag #wants zlib,
+build_libwebp #wants giflib, jpeg, libtiff, wic, sdl, png, glut, opengl
+build_libTIFF #wants lzw, zlib, jpeg, jbig, lzma, zstd, webp, glut, opengl
+rebuild_libwebp #wants giflib, jpeg, libtiff, wic, sdl, png, glut, opengl
 #utilmacros
 #xorgproto
-libXML #wants iconv, icu, lzma, zlib
-FreeType2 #wants harfbuzz, zlib,linpng,bzip2
-FontConfig #wants iconv, freetype2, expat, XML, jsonc
-harfbuzz #wants glib, icu, freetype2, cairo, fontconfig, graphite2, coretext, directwrite, GDI, uniscribe
-#FreeType2RB
-fribidi #
-libass #wants nasm, iconv, FreeType2, fribidi, FontConfig, coretext, directwrite, harfbuzz
-openjpeg #
-lensfun #wants glib
+build_libXML #wants iconv, icu, lzma, zlib
+build_FreeType2 #wants harfbuzz, zlib,linpng,bzip2
+build_FontConfig #wants iconv, freetype2, expat, XML, jsonc
+build_harfbuzz #wants glib, icu, freetype2, cairo, fontconfig, graphite2, coretext, directwrite, GDI, uniscribe
+#rebuild_FreeType2
+build_fribidi # wants c2man (if compiling from git)
+build_libass #wants nasm, iconv, FreeType2, fribidi, FontConfig, coretext, directwrite, harfbuzz
+build_openjpeg #
+build_lensfun #wants glib
 }
 
 tdeps(){
 spd-say --rate -25 "Starting text dependencies"
-libleptonica #wants zlib, png, jpeg, giflib, libtiff, libwebp
-libtesseract #wants opencl, tiff, asciidoc, libleptonica, icu, pango, cairo
-imlib2 #wants freetype, x-libs, jpeg, png, webp, tiff, giflib, zlib, bz2, id3tag
-libcaca #wants zlib, slang, opencl, ftgl, imlib2, pangoft2, cppunit, zzuf
-libilbc #
-frei0r # opencv, gavl, cairo
+build_libleptonica #wants zlib, png, jpeg, giflib, libtiff, libwebp
+build_libtesseract #wants opencl, tiff, asciidoc, libleptonica, icu, pango, cairo
+build_imlib2 #wants freetype, x-libs, jpeg, png, webp, tiff, giflib, zlib, bz2, id3tag
+build_libcaca #wants zlib, slang, opencl, ftgl, imlib2, pangoft2, cppunit, zzuf
+build_libilbc #
+build_frei0r # opencv, gavl, cairo
 }
 
 vdeps(){
 spd-say --rate -25 "Starting video dependencies"
 build_libbluray #wants libxml2, freetype2, fontconfig
-libaom #
-dav1d #wants nasm, meson, ninja
-Xvid #wants yasm,
-x264 #
-x265 #wants numa, nasm
-libvidstab #
-zimg #
+build_libaom #
+build_dav1d #wants nasm, meson, ninja
+build_Xvid #wants yasm,
+build_x264 #
+build_x265 #wants numa, nasm
+build_libvidstab #
+build_zimg #
 #sdl2
 }
 
@@ -1968,7 +1994,7 @@ spd-say --rate -25 "Dependencies built"
 ff_time=$(date +%H:%M)
 echo
 echo $ff_time
-ffmpeg
+build_ffmpeg
 
 echo Started:				$start_time
 echo Dependencies Started:		$dp_time
