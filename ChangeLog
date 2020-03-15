@@ -1,3 +1,8 @@
+3.8s
+ - add do_svn_checkout function
+ - removed uses of BIN_DIR, as it was causing compiling problems
+ - bulk version updates (most from git now, so latest versions)
+
 3.7s
  - added libbluray and nv-codec-headers
 
