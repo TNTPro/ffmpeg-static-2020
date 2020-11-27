@@ -1,9 +1,15 @@
-FFmpeg static build
+FFmpeg non-free static build
 ===================
 
-*STATUS*: community-supported
+*STATUS*: Working
 
-Three scripts to make a static build of ffmpeg with all the latest codecs (webm + h264).
+A script to make a static build of ffmpeg with all the latest codecs (webm + h264 + vp9 + hevc).
+Note: The was forked from zimbatm/ffmpeg-static and then I updated the build-ubuntu.sh & build-ubuntu.sh scripts to add a lot more fuctionality and the env.source file for a bit of restructuring.
+It aims to build as much as possible from source, so as to get the latest versions of libs etc. and will compile on clean install of ubuntu 16.04.
+I didn't touch any of the other stuff (Docker file etc.) as I know nothing of this stuff and do not have the time to or interest to learn. 
+
+The following is from the original instructions, so they are somewhat correct.
+
 
 Just follow the instructions below. Once you have the build dependencies,
 run ./build.sh, wait and you should get the ffmpeg binary in target/bin
@@ -83,28 +89,10 @@ Community, bugs and reports
 
 This repository is community-supported. If you make a useful PR then you will
 be added as a contributor to the repo. All changes are assumed to be licensed
-under the same license as the project (ISC).
-
-As a contributor you can do whatever you want. Help maintain the scripts,
-upgrade dependencies and merge other people's PRs. Just be responsible and
-make an issue if you want to introduce bigger changes so we can discuss them
-beforehand.
-
-### TODO
-
- * Add some tests to check that video output is correctly generated
-   this would help upgrading the package without too much work
- * OSX's xvidcore does not detect yasm correctly
- * remove remaining libs (?)
-
-Related projects
-----------------
-
-* FFmpeg Static Builds - http://johnvansickle.com/ffmpeg/
+under the same license as the project.
 
 License
 -------
 
-This project is licensed under the ISC. See the [LICENSE](LICENSE) file for
-the legalities.
+Be happy.
 
