@@ -94,5 +94,5 @@ under the same license as the project.
 License
 -------
 
-Be happy.
+This project is licensed under the ISC. See the LICENSE file for the legalities.
 
