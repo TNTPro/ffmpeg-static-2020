@@ -185,6 +185,7 @@ echo
 #this is our working directory
 cd $BUILD_DIR
 
+alldownloads() {
 #[ $is_x86 -eq 1 ] && download \
 #  "yasm-1.3.0.tar.gz" \
 #  "" \
@@ -199,7 +200,7 @@ do_git_checkout https://github.com/asciidoc/asciidoc "$BUILD_DIR"/asciidoc-git m
   "7d0f554cacd6c5021b3cda3ba9f2474c" \
   "https://www.nasm.us/pub/nasm/stable/"
 
-do_git_checkout https://github.com/mesonbuild/meson.git "$BUILD_DIR"/meson-git master
+do_git_checkout https://github.com/mesonbuild/meson.git "$BUILD_DIR"/meson-git 0.56 #master
 
 do_git_checkout https://github.com/libffi/libffi.git "$BUILD_DIR"/libffi-git master
 
@@ -342,6 +343,9 @@ do_git_checkout https://git.code.sf.net/p/soxr/code "$BUILD_DIR"/soxr-git master
 do_git_checkout https://github.com/kubo/flite.git $BUILD_DIR/flite-git master
 
 do_git_checkout https://github.com/google/snappy.git $BUILD_DIR/snappy-git master
+cd $BUILD_DIR/snappy-git
+git submodule update --init
+cd $BUILD_DIR
 
 #download \
 #  "vamp-plugin-sdk-v2.7.1.tar.gz" \
@@ -533,7 +537,7 @@ do_git_checkout https://github.com/cacalabs/libcaca.git "$BUILD_DIR"/libcaca-git
 #  "libilbc-master.tar.gz" \
 #  "nil" \
 #  "https://github.com/TimothyGu/libilbc/archive/"
-do_git_checkout https://github.com/TimothyGu/libilbc.git "$BUILD_DIR"/libilbc-git master
+do_git_checkout https://github.com/TimothyGu/libilbc.git "$BUILD_DIR"/libilbc-git debian
 
 do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git master
 
@@ -560,8 +564,9 @@ do_git_checkout https://code.videolan.org/videolan/x264.git "$BUILD_DIR"/x264-gi
 #  "" \
 #  "94808045a34d88a857e5eaf3f68f4bca" \
 #  "https://bitbucket.org/multicoreware/x265/downloads/"
-rm -rf "$BUILD_DIR"/x265-git
-hg clone http://hg.videolan.org/x265 "$BUILD_DIR"/x265-git
+#rm -rf "$BUILD_DIR"/x265-git
+#hg clone http://hg.videolan.org/x265 "$BUILD_DIR"/x265-git
+do_git_checkout https://bitbucket.org/multicoreware/x265_git.git "$BUILD_DIR"/x265-git master
 
 download \
   "fribidi-1.0.8.tar.bz2" \
@@ -597,6 +602,7 @@ download \
   "85c99f782dd3244a8e02ea85d29ecee2" \
   "https://github.com/FFmpeg/FFmpeg/archive"
 #do_git_checkout https://github.com/FFmpeg/FFmpeg.git "$BUILD_DIR"/FFmpeg-git master
+}
 
 [ $download_only -eq 1 ] && exit 0
 
@@ -1364,7 +1370,7 @@ cd $BUILD_DIR/xorgproto-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 mkdir -pv build
 cd build/
-meson --prefix=$TARGET_DIR .. && ninja
+${BUILD_DIR}/meson-git/meson.py --prefix=$TARGET_DIR .. && ninja
 ninja install
 }
 
@@ -1574,6 +1580,17 @@ make install
 }
 
 build_dav1d() {
+echo
+/bin/echo -e "\e[93m*** Building dav1d ***\e[39m"
+echo
+cd $BUILD_DIR/libdav1d-*
+${BUILD_DIR}/meson-git/meson.py --prefix=${TARGET_DIR} --libdir=${TARGET_DIR}/lib --buildtype=release --strip --default-library=static build
+cd build/
+ninja -j 1
+ninja install
+#cp build/src/libdav1d.a $TARGET_DIR/lib || exit 1 # avoid 'run ranlib' weird failure, possibly older meson's https://github.com/mesonbuild/meson/issues/4138 :|
+}
+build_dav2d() {
 echo
 /bin/echo -e "\e[93m*** Building dav1d ***\e[39m"
 echo
@@ -1963,6 +1980,8 @@ build_libvidstab #
 build_zimg #
 #sdl2
 }
+
+alldownloads
 
 dp_time=$(date +%H:%M)
 echo
