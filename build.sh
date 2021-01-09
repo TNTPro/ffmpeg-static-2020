@@ -1218,7 +1218,7 @@ echo
 echo
 cd $BUILD_DIR/rubberband-git
 apply_patch file://$PATCH_DIR/rubberband_git_static-lib.diff -p0 # create install-static target
-./configure --prefix=$TARGET_DIR
+./configure --prefix=$TARGET_DIR --disable-ladspa
 make install-static # AR=${cross_prefix}ar # No need for 'do_make_install', because 'install-static' already has install-instructions.
     sed -i.bak 's/-lrubberband.*$/-lrubberband -lfftw3 -lsamplerate -lstdc++/' $TARGET_DIR/lib/pkgconfig/rubberband.pc
 }
