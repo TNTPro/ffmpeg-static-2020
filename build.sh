@@ -1590,18 +1590,6 @@ ninja -j 1
 ninja install
 #cp build/src/libdav1d.a $TARGET_DIR/lib || exit 1 # avoid 'run ranlib' weird failure, possibly older meson's https://github.com/mesonbuild/meson/issues/4138 :|
 }
-build_dav2d() {
-echo
-/bin/echo -e "\e[93m*** Building dav1d ***\e[39m"
-echo
-cd $BUILD_DIR/libdav1d-*
-mkdir -pv build
-cd build/
-${BUILD_DIR}/meson-git/meson.py --prefix=${TARGET_DIR} --libdir=${TARGET_DIR}/lib --buildtype=release --strip --default-library=static ..
-ninja -j 1
-ninja install
-#cp build/src/libdav1d.a $TARGET_DIR/lib || exit 1 # avoid 'run ranlib' weird failure, possibly older meson's https://github.com/mesonbuild/meson/issues/4138 :|
-}
 
 build_Xvid(){
 echo
