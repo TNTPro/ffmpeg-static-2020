@@ -20,7 +20,7 @@ Build dependencies
     # Debian & Ubuntu
     $ apt-get install build-essential curl tar libass-dev libtheora-dev libvorbis-dev libtool cmake automake autoconf
 
-Ubuntu users can download dependencies and compile in one command:
+    Ubuntu users can download dependencies and compile in one command:
 
     $ sudo ./build-ubuntu.sh
 
