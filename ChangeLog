@@ -1,3 +1,8 @@
+3.9s
+ - updated ffmpeg to 4.3.1
+ - more switching to use repositories
+ - update versions
+
 3.8s
  - add do_svn_checkout function
  - removed uses of BIN_DIR, as it was causing compiling problems

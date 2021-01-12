@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 3.8s
+# ffmpeg static build 3.9s
 
 set -e
 set -u
@@ -69,7 +69,7 @@ esac
 mkdir -pv "$BUILD_DIR" "$TARGET_DIR" "$DOWNLOAD_DIR" "$BIN_DIR"
 
 #download and extract package
-download(){
+download() {
   filename="$1"
   if [ ! -z "$2" ];then
     filename="$2"
@@ -195,10 +195,11 @@ alldownloads() {
 do_git_checkout https://github.com/asciidoc/asciidoc "$BUILD_DIR"/asciidoc-git master
 
 [ $is_x86 -eq 1 ] && download \
-  "nasm-2.14.tar.xz" \
+  "nasm-2.15.05.tar.bz2" \
   "" \
-  "7d0f554cacd6c5021b3cda3ba9f2474c" \
-  "https://www.nasm.us/pub/nasm/stable/"
+  "b8985eddf3a6b08fc246c14f5889147c" \
+  "https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/"
+#[ $is_x86 -eq 1 ] && do_git_checkout https://github.com/netwide-assembler/nasm.git "$BUILD_DIR"/nasm-git master
 
 do_git_checkout https://github.com/mesonbuild/meson.git "$BUILD_DIR"/meson-git 0.56 #master
 
@@ -354,11 +355,12 @@ cd $BUILD_DIR
 #  "https://github.com/c4dm/vamp-plugin-sdk/archive/"
 do_git_checkout https://github.com/c4dm/vamp-plugin-sdk.git "$BUILD_DIR"/vamp-plugin-sdk-git master
 
-download \
-  "fftw-3.3.6-pl2.tar.gz" \
-  "" \
-  "927e481edbb32575397eb3d62535a856" \
-  "http://fftw.org/"
+#download \
+#  "fftw-3.3.6-pl2.tar.gz" \
+#  "" \
+#  "927e481edbb32575397eb3d62535a856" \
+#  "http://fftw.org/"
+do_git_checkout https://github.com/FFTW/fftw3.git $BUILD_DIR/fftw3-git master
 
 do_git_checkout https://github.com/erikd/libsamplerate.git $BUILD_DIR/libsamplerate-git master
 
@@ -545,12 +547,12 @@ do_git_checkout https://aomedia.googlesource.com/aom "$BUILD_DIR"/aom-git master
 
 do_git_checkout https://code.videolan.org/videolan/dav1d.git "$BUILD_DIR"/libdav1d-git master
 
-download \
-  "xvidcore-1.3.5.tar.gz" \
-  "" \
-  "69784ebd917413d8592688ae86d8185f" \
-  "http://downloads.xvid.org/downloads/"
-#svn checkout http://svn.xvid.org/trunk/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
+#download \
+#  "xvidcore-1.3.5.tar.gz" \
+#  "" \
+#  "69784ebd917413d8592688ae86d8185f" \
+#  "http://downloads.xvid.org/downloads/"
+svn checkout http://svn.xvid.org/trunk/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
 
 #download \
 #  "x264-master.tar.gz" \
@@ -568,12 +570,13 @@ do_git_checkout https://code.videolan.org/videolan/x264.git "$BUILD_DIR"/x264-gi
 #hg clone http://hg.videolan.org/x265 "$BUILD_DIR"/x265-git
 do_git_checkout https://bitbucket.org/multicoreware/x265_git.git "$BUILD_DIR"/x265-git master
 
-download \
-  "fribidi-1.0.8.tar.bz2" \
-  "" \
-  "962c7d8ebaa711d4e306161dbe14aa55" \
-  "https://github.com/fribidi/fribidi/releases/download/v1.0.8/"
-#do_git_checkout https://github.com/fribidi/fribidi.git "$BUILD_DIR"/fribidi-git master
+#download \
+#  "fribidi-1.0.8.tar.bz2" \
+#  "" \
+#  "962c7d8ebaa711d4e306161dbe14aa55" \
+#  "https://github.com/fribidi/fribidi/releases/download/v1.0.8/"
+do_git_checkout https://github.com/fribidi/fribidi.git "$BUILD_DIR"/fribidi-git master
+#do_git_checkout https://github.com/Oxalin/fribidi.git "$BUILD_DIR"/fribidi-git doxygen
 
 #download \
 #  "0.14.0.tar.gz" \
@@ -596,19 +599,19 @@ do_git_checkout https://github.com/georgmartius/vid.stab.git vid.stab-git master
 #  "https://github.com/sekrit-twc/zimg/archive/"
 do_git_checkout https://github.com/sekrit-twc/zimg.git "$BUILD_DIR"/zimg-git master
 
-download \
-  "n4.2.2.tar.gz" \
-  "ffmpeg4.2.2.tar.gz" \
-  "85c99f782dd3244a8e02ea85d29ecee2" \
-  "https://github.com/FFmpeg/FFmpeg/archive"
-#do_git_checkout https://github.com/FFmpeg/FFmpeg.git "$BUILD_DIR"/FFmpeg-git master
+#download \
+#  "n4.2.2.tar.gz" \
+#  "ffmpeg4.2.2.tar.gz" \
+#  "85c99f782dd3244a8e02ea85d29ecee2" \
+#  "https://github.com/FFmpeg/FFmpeg/archive"
+do_git_checkout https://github.com/FFmpeg/FFmpeg.git "$BUILD_DIR"/FFmpeg-git n4.3.1 #n4.2.2 #master
 }
 
 [ $download_only -eq 1 ] && exit 0
 
 TARGET_DIR_SED=$(echo $TARGET_DIR | awk '{gsub(/\//, "\\/"); print}')
 
-yasm(){
+yasm() {
   if [ $is_x86 -eq 1 ]; then
     echo
     /bin/echo -e "\e[93m*** Building yasm ***\e[39m"
@@ -621,7 +624,7 @@ yasm(){
   fi
 }
 
-build_asciidoc(){
+build_asciidoc() {
 echo
 /bin/echo -e "\e[93m*** Building asciidoc (Multi Dependency) ***\e[39m"
 echo
@@ -633,20 +636,21 @@ make -j $jval
 make install
 }
 
-build_nasm(){
+build_nasm() {
   if [ $is_x86 -eq 1 ]; then
     echo
     /bin/echo -e "\e[93m*** Building nasm ***\e[39m"
     echo
-    cd $BUILD_DIR/nasm*
+    cd $BUILD_DIR/nasm-*
     [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+    [ ! -f configure ] && ./autogen.sh
     [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR #--bindir=$BIN_DIR
     make -j $jval
     make install
   fi
 }
 
-extract_cmake(){
+extract_cmake() {
 echo
 /bin/echo -e "\e[93m*** Extracting cmake ***\e[39m"
 echo
@@ -657,7 +661,7 @@ tar --wildcards --strip-components 1 --directory=$TARGET_DIR/ -zxvf cmake-3.16.4
 tar --wildcards --strip-components 1 --directory=$TARGET_DIR/ -zxvf cmake-3.16.4-Linux-x86_64.tar.gz cmake-3.16.4-Linux-x86_64/share/*
 }
 
-extract_ninja(){
+extract_ninja() {
 echo
 /bin/echo -e "\e[93m*** Extracting ninja ***\e[39m"
 echo
@@ -665,7 +669,7 @@ cd $DOWNLOAD_DIR/
 unzip -o -d "$TARGET_DIR"/bin ninja-linux.zip
 }
 
-build_libffi(){
+build_libffi() {
 echo
 /bin/echo -e "\e[93m*** Building libffi ***\e[39m"
 echo
@@ -676,7 +680,7 @@ make -j $jval
 make install
 }
 
-linuxPAM(){
+linuxPAM() {
 echo
 /bin/echo -e "\e[93m*** Building linux-PAM ***\e[39m"
 echo
@@ -688,7 +692,7 @@ make -j $jval
 make install
 }
 
-libcap(){
+libcap() {
 # there's no configure, we have to edit Makefile directly
 echo
 /bin/echo -e "\e[93m*** Building libCap (with PAM) ***\e[39m"
@@ -715,7 +719,7 @@ cp *.h $TARGET_DIR/include
 cp -R include/* $TARGET_DIR/include
 }
 
-build_liblzma(){
+build_liblzma() {
 echo
 /bin/echo -e "\e[93m*** Building xz to get liblzma ( Dependency) ***\e[39m"
 echo
@@ -726,7 +730,7 @@ make -j $jval
 make install
 }
 
-zlib125(){
+zlib125() {
 echo
 /bin/echo -e "\e[93m*** Building zlib-1.2.5 (libPNG Dependency) ***\e[39m"
 echo
@@ -743,7 +747,7 @@ make -j $jval
 make install
 }
 
-build_zlib(){
+build_zlib() {
 echo
 /bin/echo -e "\e[93m*** Building zlib-1.2.11 (Python Dependency) ***\e[39m"
 echo
@@ -758,7 +762,7 @@ make -j $jval
 make install
 }
 
-build_libzstd(){
+build_libzstd() {
 echo
 /bin/echo -e "\e[93m*** Building libzstd ***\e[39m"
 echo
@@ -772,7 +776,7 @@ make -j $jval
 make install
 }
 
-tcl(){
+tcl() {
 echo
 /bin/echo -e "\e[93m*** Building tcl (tkinter Dependency) ***\e[39m"
 echo
@@ -783,7 +787,7 @@ make -j $jval
 make install
 }
 
-tkinter(){
+tkinter() {
 echo
 /bin/echo -e "\e[93m*** Building tkinter (Python Dependency) ***\e[39m"
 echo
@@ -794,7 +798,7 @@ make -j $jval
 make install
 }
 
-build_libexpat(){
+build_libexpat() {
 echo
 /bin/echo -e "\e[93m*** Building libexpat (fontconfig Dependency) ***\e[39m"
 echo
@@ -806,7 +810,7 @@ make -j $jval
 make install
 }
 
-build_OpenSSL_RTMP(){
+build_OpenSSL_RTMP() {
 echo
 /bin/echo -e "\e[93m*** Building OpenSSL for libRTMP ***\e[39m"
 echo
@@ -821,7 +825,7 @@ make -j $jval
 make install
 }
 
-build_librtmp(){
+build_librtmp() {
 # needs old version of openSSL
 echo
 /bin/echo -e "\e[93m*** Building librtmp ***\e[39m"
@@ -840,7 +844,7 @@ fi
 make install_base
 }
 
-build_OpenSSL(){
+build_OpenSSL() {
 echo
 /bin/echo -e "\e[93m*** Building OpenSSL ***\e[39m"
 echo
@@ -858,7 +862,7 @@ make -j $jval
 make install
 }
 
-Python(){
+Python() {
 echo
 /bin/echo -e "\e[93m*** Building Python (libxml2 dependency) ***\e[39m"
 echo
@@ -958,7 +962,7 @@ make -j $jval
 make install
 }
 
-build_ALSAlib(){
+build_ALSAlib() {
 echo
 /bin/echo -e "\e[93m***  Building ALSAlib ***\e[39m"
 echo
@@ -975,7 +979,7 @@ make -j $jval
 make install
 }
 
-build_voamrwbenc(){
+build_voamrwbenc() {
 echo
 /bin/echo -e "\e[93m*** Building vo-amrwbenc... ***\e[39m"
 echo
@@ -988,7 +992,7 @@ make -j $jval
 make install
 }
 
-build_opencoreamr(){
+build_opencoreamr() {
 echo
 /bin/echo -e "\e[93m*** Building opencore-amr... ***\e[39m"
 echo
@@ -1001,7 +1005,7 @@ make -j $jval
 make install
 }
 
-build_fdkaac(){
+build_fdkaac() {
 echo
 /bin/echo -e "\e[93m*** Building fdk-aac ***\e[39m"
 echo
@@ -1013,7 +1017,7 @@ make -j $jval
 make install
 }
 
-build_mp3lame(){
+build_mp3lame() {
 echo
 /bin/echo -e "\e[93m*** Building mp3lame ***\e[39m"
 echo
@@ -1026,7 +1030,7 @@ make -j 1
 make install
 }
 
-build_opus(){
+build_opus() {
 echo
 /bin/echo -e "\e[93m*** Building opus ***\e[39m"
 echo
@@ -1039,7 +1043,7 @@ make install
 sed -i "s/Version: unknown/Version: 1.3.1/g" $TARGET_DIR/lib/pkgconfig/opus.pc
 }
 
-build_libvpx(){
+build_libvpx() {
 echo
 /bin/echo -e "\e[93m*** Building libvpx ***\e[39m"
 echo
@@ -1050,7 +1054,7 @@ make -j $jval
 make install
 }
 
-build_libsoxr(){
+build_libsoxr() {
 echo
 /bin/echo -e "\e[93m*** Building libsoxr ***\e[39m"
 echo
@@ -1111,8 +1115,12 @@ build_fftw() {
 echo
 /bin/echo -e "\e[93m*** Building fftw ***\e[39m"
 echo
-cd $BUILD_DIR/fftw-*
-./configure --prefix=$TARGET_DIR --disable-shared --enable-static --disable-doc
+cd $BUILD_DIR/fftw*
+if [ ! -f configure ]; then
+  ./bootstrap.sh --prefix=$TARGET_DIR --disable-shared --enable-static --disable-doc
+else
+  ./configure --prefix=$TARGET_DIR --enable-maintainer-mode --enable-threads --disable-shared --enable-static --disable-doc
+fi
 make -j $jval
 make install
 }
@@ -1131,7 +1139,7 @@ make install
   # rubberband can use this, but uses speex bundled by default [any difference? who knows!]
 }
 
-build_libogg(){
+build_libogg() {
 echo
 /bin/echo -e "\e[93m*** Building libogg ***\e[39m"
 echo
@@ -1143,7 +1151,7 @@ make -j $jval
 make install
 }
 
-build_libflac(){
+build_libflac() {
 echo
 /bin/echo -e "\e[93m*** Building libflac ***\e[39m"
 echo
@@ -1155,7 +1163,7 @@ make -j $jval
 make install
 }
 
-build_libvorbis(){
+build_libvorbis() {
 echo
 /bin/echo -e "\e[93m*** Building libvorbis ***\e[39m"
 echo
@@ -1178,7 +1186,7 @@ make -j $jval
 make install
 }
 
-build_libspeex(){
+build_libspeex() {
 echo
 /bin/echo -e "\e[93m*** Building libspeex ***\e[39m"
 echo
@@ -1194,7 +1202,7 @@ unset SPEEXDSP_CFLAGS
 unset SPEEXDSP_LIBS
 }
 
-build_libsndfile(){
+build_libsndfile() {
 echo
 /bin/echo -e "\e[93m*** Building libsndfile ***\e[39m"
 echo
@@ -1223,7 +1231,7 @@ make install-static # AR=${cross_prefix}ar # No need for 'do_make_install', beca
     sed -i.bak 's/-lrubberband.*$/-lrubberband -lfftw3 -lsamplerate -lstdc++/' $TARGET_DIR/lib/pkgconfig/rubberband.pc
 }
 
-build_libtwolame(){
+build_libtwolame() {
 echo
 /bin/echo -e "\e[93m*** Building libtwolame ***\e[39m"
 echo
@@ -1238,7 +1246,7 @@ make -j $jval
 make install
 }
 
-build_libtheora(){
+build_libtheora() {
 echo
 /bin/echo -e "\e[93m*** Building libtheora ***\e[39m"
 echo
@@ -1250,7 +1258,7 @@ make -j $jval
 make install
 }
 
-build_PulseAudio(){
+build_PulseAudio() {
 echo
 /bin/echo -e "\e[93m*** Building PulseAudio ***\e[39m"
 echo
@@ -1264,7 +1272,7 @@ make
 make install
 }
 
-build_GIFlib(){
+build_GIFlib() {
 echo
 /bin/echo -e "\e[93m*** Building GIFlib (imlib2 and libwebp Dependency) ***\e[39m"
 echo
@@ -1279,7 +1287,7 @@ make install PREFIX=$TARGET_DIR
 #cp -v -R doc/* $TARGET_DIR/share/doc/giflib-5.2.1
 }
 
-build_libjpegturbo(){
+build_libjpegturbo() {
 echo
 /bin/echo -e "\e[93m*** Building libjpeg-turbo ***\e[39m"
 echo
@@ -1289,7 +1297,7 @@ make -j $jval
 make install
 }
 
-build_libPNG(){
+build_libPNG() {
 echo
 /bin/echo -e "\e[93m*** Building libPNG ***\e[39m"
 echo
@@ -1299,7 +1307,7 @@ make -j $jval
 make install
 }
 
-build_libID3tag(){
+build_libID3tag() {
 echo
 /bin/echo -e "\e[93m*** Building libID3tag (imlib2 Dependency) ***\e[39m"
 echo
@@ -1310,7 +1318,7 @@ make -j $jval
 make install
 }
 
-build_libwebp(){
+build_libwebp() {
 echo
 /bin/echo -e "\e[93m*** Building libwebp ***\e[39m"
 echo
@@ -1324,7 +1332,7 @@ make install
 }
 
 # No jbig and zstd, else 'tesseract not found using pkg-config'
-build_libTIFF(){
+build_libTIFF() {
 echo
 /bin/echo -e "\e[93m*** Building libTIFF ***\e[39m"
 echo
@@ -1340,7 +1348,7 @@ mv "$TARGET_DIR/include/zstd.h.bak" "$TARGET_DIR/include/zstd.h"
 #sed -i.bak 's/-ltiff.*$/-ltiff -ljpeg -ljbig -lzstd -lz -llzma -lm/' $PKG_CONFIG_PATH/libtiff-4.pc # static deps
 }
 
-rebuild_libwebp(){
+rebuild_libwebp() {
 echo
 /bin/echo -e "\e[93m*** ReBuilding libwebp ***\e[39m"
 echo
@@ -1352,7 +1360,7 @@ make -j $jval
 make install
 }
 
-utilmacros(){
+utilmacros() {
 echo
 /bin/echo -e "\e[93m*** Building util-macros (xorgproto Dependency) ***\e[39m"
 echo
@@ -1362,7 +1370,7 @@ cd $BUILD_DIR/util-macros-*
 make install
 }
 
-xorgproto(){
+xorgproto() {
 echo
 /bin/echo -e "\e[93m*** Building xorgproto (libXau Dependency) ***\e[39m"
 echo
@@ -1374,7 +1382,7 @@ ${BUILD_DIR}/meson-git/meson.py --prefix=$TARGET_DIR .. && ninja
 ninja install
 }
 
-build_libXML(){
+build_libXML() {
 echo
 /bin/echo -e "\e[93m*** Building libXML ***\e[39m"
 echo
@@ -1392,7 +1400,7 @@ make -j $jval
 make install
 }
 
-build_FreeType2(){
+build_FreeType2() {
 echo
 /bin/echo -e "\e[93m*** Building FreeType2 (libass dependency) ***\e[39m"
 echo
@@ -1400,12 +1408,15 @@ cd $BUILD_DIR/freetype*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 #sed -ri "s:.*(AUX_MODULES.*valid):\1:" modules.cfg
 #sed -r "s:.*(#.*SUBPIXEL_RENDERING) .*:\1:" -i include/freetype/config/ftoption.h
+if [ "$platform" = "linux" ]; then
+  [ ! -f ./builds/unix/configure ] && ./autogen.sh
+fi
 [ ! -f config.status ] && ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --without-harfbuzz --with-bzip2 
 make -j $jval
 make install
 }
 
-build_FontConfig(){
+build_FontConfig() {
 echo
 /bin/echo -e "\e[93m*** Building FontConfig ***\e[39m"
 echo
@@ -1420,7 +1431,7 @@ make -j $jval
 make install
 }
 
-build_harfbuzz(){
+build_harfbuzz() {
 echo
 /bin/echo -e "\e[93m*** Building harfbuzz (libass dependency) ***\e[39m"
 echo
@@ -1435,7 +1446,7 @@ make install
 #  sed -i.bak 's/libfreetype.la -lbz2/libfreetype.la -lharfbuzz -lbz2 \/home\/tec\/DEV\/ffmpeg-static\/target\/lib\/libharfbuzz-subset.la -lharfbuzz -lbz2/' "$TARGET_DIR/lib/libharfbuzz.la"
 }
 
-rebuild_FreeType2(){
+rebuild_FreeType2() {
 echo
 /bin/echo -e "\e[93m*** ReBuilding FreeType2 after HarfBuzz ***\e[39m"
 echo
@@ -1450,7 +1461,7 @@ make install
   sed -i.bak 's/libfreetype.la -lbz2/libfreetype.la -lharfbuzz -lbz2/' "$TARGET_DIR/lib/libharfbuzz.la"
 }
 
-build_openjpeg(){
+build_openjpeg() {
 echo
 /bin/echo -e "\e[93m*** Building openjpeg ***\e[39m"
 echo
@@ -1501,7 +1512,7 @@ make install
 sed -i.bak 's/-ltesseract.*$/-ltesseract -lstdc++ -llept -ltiff -llzma -ljpeg -lz -lgomp/' $PKG_CONFIG_PATH/tesseract.pc # see above, gomp for }
 }
 
-build_imlib2(){
+build_imlib2() {
 echo
 /bin/echo -e "\e[93m*** Building imlib2 (libcaca dependency)***\e[39m"
 echo
@@ -1516,7 +1527,7 @@ make -j $jval
 make install
 }
 
-build_libcaca(){
+build_libcaca() {
 echo
 /bin/echo -e "\e[93m*** Building libcaca... ***\e[39m"
 echo
@@ -1529,7 +1540,7 @@ make -j $jval
 make install
 }
 
-build_libilbc(){
+build_libilbc() {
 echo
 /bin/echo -e "\e[93m*** Building libilbc ***\e[39m"
 echo
@@ -1542,7 +1553,7 @@ make -j $jval
 make install
 }
 
-build_frei0r(){
+build_frei0r() {
 echo
 /bin/echo -e "\e[93m*** Building frei0r ***\e[39m"
 echo
@@ -1591,7 +1602,7 @@ ninja install
 #cp build/src/libdav1d.a $TARGET_DIR/lib || exit 1 # avoid 'run ranlib' weird failure, possibly older meson's https://github.com/mesonbuild/meson/issues/4138 :|
 }
 
-build_Xvid(){
+build_Xvid() {
 echo
 /bin/echo -e "\e[93m*** Building Xvid ***\e[39m"
 echo
@@ -1599,8 +1610,8 @@ cd $BUILD_DIR/xvid*/build/generic
 #sed -i 's/^LN_S=@LN_S@/& -f -v/' platform.inc.in
 #sed -i '/AC_MSG_CHECKING(for platform specific LDFLAGS\/CFLAGS)/{n;s/.*/SPECIFIC_LDFLAGS="-static"/}' ./configure.in
 #sed -i '/SPECIFIC_LDFLAGS="-static"/{n;s/.*/SPECIFIC_CFLAGS="-static"/}' ./configure.in
-apply_patch file://$PATCH_DIR/xvidcore-1.3.4_static-lib.diff -p0
 ./bootstrap.sh
+apply_patch file://$PATCH_DIR/xvidcore-git_static-lib.diff -p0
 ./configure --prefix=$TARGET_DIR --disable-shared
 make -j $jval
 make install
@@ -1608,7 +1619,7 @@ make install
 #install -v -m755 -d $TARGET_DIR/share/doc/xvidcore-1.3.5/examples && install -v -m644 ../../doc/* $TARGET_DIR/share/doc/xvidcore-1.3.5 && install -v -m644 ../../examples/* $TARGET_DIR/share/doc/xvidcore-1.3.5/examples
 }
 
-build_x264(){
+build_x264() {
 echo
 /bin/echo -e "\e[93m*** Building x264 ***\e[39m"
 echo
@@ -1619,7 +1630,7 @@ make -j $jval
 make install
 }
 
-build_x265(){
+build_x265() {
 echo
 /bin/echo -e "\e[93m*** Building x265 ***\e[39m"
 echo
@@ -1632,7 +1643,7 @@ make -j $jval
 make install
 }
 
-build_fribidi(){
+build_fribidi() {
 echo
 /bin/echo -e "\e[93m*** Building fribidi (libass dependency)***\e[39m"
 echo
@@ -1643,11 +1654,11 @@ if [ ! -f configure ]; then
 else
   ./configure --prefix=$TARGET_DIR --disable-shared --enable-static --disable-debug --disable-deprecated
 fi
-make -j $jval
+make
 make install
 }
 
-build_libass(){
+build_libass() {
 echo
 /bin/echo -e "\e[93m*** Building libass ***\e[39m"
 echo
@@ -1659,7 +1670,7 @@ make -j $jval
 make install
 }
 
-build_libvidstab(){
+build_libvidstab() {
 echo
 /bin/echo -e "\e[93m*** Building libvidstab ***\e[39m"
 echo
@@ -1679,7 +1690,7 @@ make -j $jval
 make install
 }
 
-build_zimg(){
+build_zimg() {
 echo
 /bin/echo -e "\e[93m*** Building zimg ***\e[39m"
 echo
@@ -1691,19 +1702,19 @@ make -j $jval
 make install
 }
 
-build_ffmpeg(){
+build_ffmpeg() {
 echo
 /bin/echo -e "\e[93m*** Building FFmpeg ***\e[39m"
 date +%H:%M:%S
 echo
-cd $BUILD_DIR/FFmpeg*
+cd $BUILD_DIR/FFmpeg-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 
 if [ "$platform" = "linux" ]; then
   [ ! -f config.status ] && ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.8s \
+    --extra-version=Tec-3.9s \
     --extra-libs="-lpthread -lm -lz -ldl -lharfbuzz" \
     --extra-ldexeflags="-static" \
     --enable-pic \
@@ -1826,7 +1837,7 @@ elif [ "$platform" = "darwin" ]; then
     --cc=/usr/bin/clang \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-3.8s \
+    --extra-version=Tec-3.9s \
     --extra-cflags="-I$TARGET_DIR/include" \
     --extra-ldflags="-L$TARGET_DIR/lib" \
     --extra-ldexeflags="-Bstatic" \
@@ -1867,7 +1878,7 @@ make install
 make distclean
 }
 
-deps(){
+deps() {
 spd-say --rate -25 "Starting dependencies"
 #yasm
 build_asciidoc
@@ -1895,7 +1906,7 @@ build_vcdimager #wants libpopt, libcdio, libiso9660, libxml
 rebuild_libcdio #wants icovn, ncurses, libvcd
 }
 
-adeps(){
+adeps() {
 spd-say --rate -25 "Starting audio dependencies"
 build_libmysofa # wants zlib
 build_ALSAlib #
@@ -1924,7 +1935,7 @@ build_libtheora # needs ogg, wants vorbis, png
 #sdl1
 }
 
-pdeps(){
+pdeps() {
 spd-say --rate -25 "Starting picture dependencies"
 build_GIFlib #
 build_libjpegturbo #
@@ -1936,18 +1947,18 @@ rebuild_libwebp #wants giflib, jpeg, libtiff, wic, sdl, png, glut, opengl
 #utilmacros
 #xorgproto
 build_libXML #wants iconv, icu, lzma, zlib
+build_openjpeg #
+build_lensfun #wants glib
+}
+
+tdeps() {
+spd-say --rate -25 "Starting text dependencies"
 build_FreeType2 #wants harfbuzz, zlib,linpng,bzip2
 build_FontConfig #wants iconv, freetype2, expat, XML, jsonc
 build_harfbuzz #wants glib, icu, freetype2, cairo, fontconfig, graphite2, coretext, directwrite, GDI, uniscribe
 #rebuild_FreeType2
 build_fribidi # wants c2man (if compiling from git)
 build_libass #wants nasm, iconv, FreeType2, fribidi, FontConfig, coretext, directwrite, harfbuzz
-build_openjpeg #
-build_lensfun #wants glib
-}
-
-tdeps(){
-spd-say --rate -25 "Starting text dependencies"
 build_libleptonica #wants zlib, png, jpeg, giflib, libtiff, libwebp
 build_libtesseract #wants opencl, tiff, asciidoc, libleptonica, icu, pango, cairo
 build_imlib2 #wants freetype, x-libs, jpeg, png, webp, tiff, giflib, zlib, bz2, id3tag
@@ -1956,7 +1967,7 @@ build_libilbc #
 build_frei0r # opencv, gavl, cairo
 }
 
-vdeps(){
+vdeps() {
 spd-say --rate -25 "Starting video dependencies"
 build_libbluray #wants libxml2, freetype2, fontconfig
 build_libaom #
@@ -1970,6 +1981,7 @@ build_zimg #
 }
 
 alldownloads
+#echo "Press ENTER to continue" && bash -c read -p
 
 dp_time=$(date +%H:%M)
 echo
