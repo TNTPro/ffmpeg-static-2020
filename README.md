@@ -3,10 +3,10 @@ FFmpeg non-free static build
 
 *STATUS*: Working
 
-A script to make a static build of ffmpeg with all the latest codecs (webm + h264 + vp9 + hevc).
+A script to make a static build of ffmpeg for linux, with all the latest codecs (av1 + webm + h264 + vp9 + hevc).
 Note: The was forked from zimbatm/ffmpeg-static and then I updated the build-ubuntu.sh & build.sh scripts to add a lot more fuctionality and the env.source file for a bit of restructuring.
 It aims to build as much as possible from source, so as to get the latest versions of libs etc. and will compile on clean install of ubuntu 16.04.
-I didn't touch any of the other stuff (Docker file etc.) as I know nothing of this stuff and do not have the time to or interest to learn. 
+I didn't touch any of the other stuff (Docker file etc.) as I know nothing of this stuff and do not have the time to learn. 
 
 The following is from the original instructions, so they are somewhat correct.
 
@@ -19,6 +19,10 @@ Build dependencies
 
     # Debian & Ubuntu
     $ apt-get install build-essential curl tar libass-dev libtheora-dev libvorbis-dev libtool cmake automake autoconf
+
+Ubuntu users can download dependencies and compile in one command:
+
+    $ sudo ./build-ubuntu.sh
 
     # OS X
     # 1. install XCode
@@ -33,9 +37,6 @@ Build & "install"
     # ... wait ...
     # binaries can be found in ./target/bin/
 
-Ubuntu users can download dependencies and and install in one command:
-
-    $ sudo ./build-ubuntu.sh
 
 If you have built ffmpeg before with `build.sh`, the default behaviour is to keep the previous configuration. If you would like to reconfigure and rebuild all packages, use the `-B` flag. `-d` flag will only download and unpack the dependencies but not build.
 
@@ -52,7 +53,7 @@ Build in docker
     $ docker run -it ffmpeg-static
     $ ./build.sh [-j <jobs>] [-B] [-d]
 
-The binaries will be created in `/ffmpeg-static/bin` directory.
+The binaries will be created in `/ffmpeg-static-2020/bin` directory.
 Method of getting them out of the Docker container is up to you.
 `/ffmpeg-static` is a Docker volume.
 
