@@ -192,7 +192,7 @@ alldownloads() {
 #  "fc9e586751ff789b34b1f21d572d96af" \
 #  "http://www.tortall.net/projects/yasm/releases/"
 
-do_git_checkout https://github.com/asciidoc/asciidoc "$BUILD_DIR"/asciidoc-git master
+do_git_checkout https://github.com/asciidoc/asciidoc "$BUILD_DIR"/asciidoc-git main
 
 [ $is_x86 -eq 1 ] && download \
   "nasm-2.15.05.tar.bz2" \
