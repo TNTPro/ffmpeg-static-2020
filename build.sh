@@ -364,7 +364,7 @@ do_git_checkout https://github.com/FFTW/fftw3.git $BUILD_DIR/fftw3-git master
 
 do_git_checkout https://github.com/erikd/libsamplerate.git $BUILD_DIR/libsamplerate-git master
 
-do_git_checkout https://github.com/breakfastquay/rubberband.git $BUILD_DIR/rubberband-git master
+do_git_checkout https://github.com/breakfastquay/rubberband.git $BUILD_DIR/rubberband-git default
 
 
 #download \
