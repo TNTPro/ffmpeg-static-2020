@@ -432,7 +432,7 @@ do_git_checkout https://git.code.sf.net/u/ffontaine35/giflib "$BUILD_DIR"/giflib
 #  "libjpeg-turbo-master.tar.gz" \
 #  "nil" \
 #  "https://github.com/libjpeg-turbo/libjpeg-turbo/archive/"
-do_git_checkout https://github.com/libjpeg-turbo/libjpeg-turbo.git $BUILD_DIR/libjpeg-turbo-git master
+do_git_checkout https://github.com/libjpeg-turbo/libjpeg-turbo.git $BUILD_DIR/libjpeg-turbo-git main
 
 #download \
 #  "master.tar.gz" \
@@ -500,7 +500,7 @@ do_git_checkout https://gitlab.freedesktop.org/fontconfig/fontconfig.git "$BUILD
 #  "harfbuzz-2.6.4.tar.gz" \
 #  "188407981048daf6d92d554cfeeed48e" \
 #  "https://github.com/harfbuzz/harfbuzz/archive/"
-do_git_checkout https://github.com/harfbuzz/harfbuzz.git "$BUILD_DIR"/harfbuzz-git master
+do_git_checkout https://github.com/harfbuzz/harfbuzz.git "$BUILD_DIR"/harfbuzz-git main
 
 #download \
 #  "v2.3.1.tar.gz" \
