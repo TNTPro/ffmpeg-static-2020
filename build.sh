@@ -192,7 +192,7 @@ alldownloads() {
 #  "fc9e586751ff789b34b1f21d572d96af" \
 #  "http://www.tortall.net/projects/yasm/releases/"
 
-do_git_checkout https://github.com/asciidoc/asciidoc "$BUILD_DIR"/asciidoc-git master
+do_git_checkout https://github.com/asciidoc-py/asciidoc-py.git "$BUILD_DIR"/asciidoc-git 9.x
 
 [ $is_x86 -eq 1 ] && download \
   "nasm-2.15.05.tar.bz2" \
@@ -364,7 +364,7 @@ do_git_checkout https://github.com/FFTW/fftw3.git $BUILD_DIR/fftw3-git master
 
 do_git_checkout https://github.com/erikd/libsamplerate.git $BUILD_DIR/libsamplerate-git master
 
-do_git_checkout https://github.com/breakfastquay/rubberband.git $BUILD_DIR/rubberband-git master
+do_git_checkout https://github.com/breakfastquay/rubberband.git $BUILD_DIR/rubberband-git v1.9 #default
 
 
 #download \
@@ -432,7 +432,7 @@ do_git_checkout https://git.code.sf.net/u/ffontaine35/giflib "$BUILD_DIR"/giflib
 #  "libjpeg-turbo-master.tar.gz" \
 #  "nil" \
 #  "https://github.com/libjpeg-turbo/libjpeg-turbo/archive/"
-do_git_checkout https://github.com/libjpeg-turbo/libjpeg-turbo.git $BUILD_DIR/libjpeg-turbo-git master
+do_git_checkout https://github.com/libjpeg-turbo/libjpeg-turbo.git $BUILD_DIR/libjpeg-turbo-git main
 
 #download \
 #  "master.tar.gz" \
@@ -500,7 +500,7 @@ do_git_checkout https://gitlab.freedesktop.org/fontconfig/fontconfig.git "$BUILD
 #  "harfbuzz-2.6.4.tar.gz" \
 #  "188407981048daf6d92d554cfeeed48e" \
 #  "https://github.com/harfbuzz/harfbuzz/archive/"
-do_git_checkout https://github.com/harfbuzz/harfbuzz.git "$BUILD_DIR"/harfbuzz-git master
+do_git_checkout https://github.com/harfbuzz/harfbuzz.git "$BUILD_DIR"/harfbuzz-git main
 
 #download \
 #  "v2.3.1.tar.gz" \
@@ -1881,11 +1881,11 @@ make distclean
 deps() {
 spd-say --rate -25 "Starting dependencies"
 #yasm
-build_asciidoc
-build_nasm
+build_asciidoc #wants docbook-xsl-1.79.2, fop-2.5, libxslt-1.1.34, Lynx-2.8.9rel.1, dblatex, and W3m
+build_nasm #wants asciidoc-9.0.4 and xmlto-0.0.28
 extract_cmake
 extract_ninja
-build_libffi
+build_libffi #wants DejaGnu-1.6
 #linuxPAM
 #libcap
 build_liblzma
@@ -1971,7 +1971,7 @@ vdeps() {
 spd-say --rate -25 "Starting video dependencies"
 build_libbluray #wants libxml2, freetype2, fontconfig
 build_libaom #
-build_dav1d #wants nasm, meson, ninja
+build_dav1d #wants nasm, meson, ninja, doxygen, dot
 build_Xvid #wants yasm,
 build_x264 #
 build_x265 #wants numa, nasm
