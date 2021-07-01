@@ -409,7 +409,7 @@ do_git_checkout https://github.com/erikd/libsndfile.git $BUILD_DIR/libsndfile-gi
 #  "" \
 #  "400c164ed096c7aea82bcf8edcd3f6f9" \
 #  "https://github.com/njh/twolame/releases/download/0.4.0/"
-do_git_checkout https://github.com/njh/twolame.git $BUILD_DIR/twolame-git master
+do_git_checkout https://github.com/njh/twolame.git $BUILD_DIR/twolame-git main
 
 #download \
 #  "libtheora-1.1.1.tar.gz" \
