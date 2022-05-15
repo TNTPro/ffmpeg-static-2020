@@ -186,6 +186,14 @@ echo
 cd $BUILD_DIR
 
 alldownloads() {
+#download \
+#  "autoconf-2.71.tar.xz" \
+#  "" \
+#  "12cfa1687ffa2606337efe1a64416106" \
+#  "http://ftp.gnu.org/gnu/autoconf/"
+#do_git_checkout https://git.sv.gnu.org/r/autoconf.git "$BUILD_DIR"/autoconf-git v2.71
+
+
 #[ $is_x86 -eq 1 ] && download \
 #  "yasm-1.3.0.tar.gz" \
 #  "" \
@@ -343,7 +351,7 @@ do_git_checkout https://git.code.sf.net/p/soxr/code "$BUILD_DIR"/soxr-git master
 
 do_git_checkout https://github.com/kubo/flite.git $BUILD_DIR/flite-git master
 
-do_git_checkout https://github.com/google/snappy.git $BUILD_DIR/snappy-git master
+do_git_checkout https://github.com/google/snappy.git $BUILD_DIR/snappy-git main
 cd $BUILD_DIR/snappy-git
 git submodule update --init
 cd $BUILD_DIR
@@ -492,7 +500,7 @@ download \
 #  "" \
 #  "d5431bf5456522380d4c2c9c904a6d96" \
 #  "https://www.freedesktop.org/software/fontconfig/release/"
-do_git_checkout https://gitlab.freedesktop.org/fontconfig/fontconfig.git "$BUILD_DIR"/fontconfig-git master
+do_git_checkout https://gitlab.freedesktop.org/fontconfig/fontconfig.git "$BUILD_DIR"/fontconfig-git main
 
 # libass dependency
 #download \
@@ -509,7 +517,7 @@ do_git_checkout https://github.com/harfbuzz/harfbuzz.git "$BUILD_DIR"/harfbuzz-g
 #  "https://github.com/uclouvain/openjpeg/archive/"
 do_git_checkout https://github.com/uclouvain/openjpeg.git "$BUILD_DIR"/openjpeg-git master
 
-do_git_checkout https://github.com/DanBloomberg/leptonica.git "$BUILD_DIR"/leptonica-git master
+do_git_checkout https://github.com/DanBloomberg/leptonica.git "$BUILD_DIR"/leptonica-git 1.81.0 #master
 
 #download \
 #  "lensfun-0.3.95.tar.gz" \
@@ -518,21 +526,24 @@ do_git_checkout https://github.com/DanBloomberg/leptonica.git "$BUILD_DIR"/lepto
 #  "https://sourceforge.net/projects/lensfun/files/0.3.95/"
 do_git_checkout https://github.com/lensfun/lensfun.git "$BUILD_DIR"/lensfun-git master
 
-do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git a2e72f258a3bd6811cae226a01802d # #315
+do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 4.1
+#do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git a2e72f258a3bd6811cae226a01802d891407409f # #315
+#do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git a2e72f258a3bd6811cae226a01802d # #315
 
 #download \
 #  "imlib2-1.6.1.tar.bz2" \
 #  "" \
 #  "7b3fbcb974b48822b32b326c6a47764b" \
 #  "https://netix.dl.sourceforge.net/project/enlightenment/imlib2-src/1.6.1/"
-do_git_checkout https://git.enlightenment.org/legacy/imlib2.git "$BUILD_DIR"/imlib2-git master
+do_git_checkout https://git.enlightenment.org/old/legacy-imlib2.git "$BUILD_DIR"/imlib2-git master
 
 #download \
 #  "v0.99.beta19.tar.gz" \
 #  "libcaca-0.99.beta19.tar.gz" \
 #  "2e1ed59dc3cb2f69d3d98fd0e6a205b4" \
 #  "https://github.com/cacalabs/libcaca/archive/"
-do_git_checkout https://github.com/cacalabs/libcaca.git "$BUILD_DIR"/libcaca-git master
+# Autoconf version 2.71 or higher is required for main
+do_git_checkout https://github.com/cacalabs/libcaca.git "$BUILD_DIR"/libcaca-git v0.99.beta19
 
 #download \
 #  "master.tar.gz" \
@@ -604,7 +615,7 @@ do_git_checkout https://github.com/sekrit-twc/zimg.git "$BUILD_DIR"/zimg-git mas
 #  "ffmpeg4.2.2.tar.gz" \
 #  "85c99f782dd3244a8e02ea85d29ecee2" \
 #  "https://github.com/FFmpeg/FFmpeg/archive"
-do_git_checkout https://github.com/FFmpeg/FFmpeg.git "$BUILD_DIR"/FFmpeg-git n4.3.1 #n4.2.2 #master
+do_git_checkout https://github.com/FFmpeg/FFmpeg.git "$BUILD_DIR"/FFmpeg-git n4.4.2 #n4.3.1 #n4.2.2 #master
 }
 
 [ $download_only -eq 1 ] && exit 0
@@ -1533,7 +1544,7 @@ echo
 echo
 cd $BUILD_DIR/libcaca-*
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
-#sed -i 's/"$amvers" "<" "1.5"/"$amvers" "<" "1.05"/g' ./bootstrap
+sed -i 's/"$amvers" "<" "1.5"/"$amvers" "<" "1.05"/g' ./bootstrap
 ./bootstrap
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared --disable-slang --disable-doc --disable-ruby --disable-csharp --disable-java --disable-cxx --disable-ncurses --disable-x11 #--disable-python --disable-cocoa --bindir="$BIN_DIR" 
 make -j $jval
