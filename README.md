@@ -1,7 +1,7 @@
 FFmpeg non-free static build
 ===================
 
-*STATUS*: Working
+*STATUS*: Not Working
 
 A script to make a static build of ffmpeg for linux, with all the latest codecs (av1 + webm + h264 + vp9 + hevc).
 Note: The was forked from zimbatm/ffmpeg-static and then I updated the build-ubuntu.sh & build.sh scripts to add a lot more fuctionality and the env.source file for a bit of restructuring.
