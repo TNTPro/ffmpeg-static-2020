@@ -96,6 +96,8 @@ if [ "$UNPACK" -ne 0 ]; then
     extname=.tar.bz2
   elif [ "$filename" != "${filename%.tar.xz}" ]; then
     extname=.tar.xz
+  elif [ "$filename" != "${filename%.zip}" ]; then
+    extname=.zip
   else
     stderr extension of $filename is not supported
     exit 1
@@ -116,10 +118,12 @@ if [ "$UNPACK" -ne 0 ]; then
     .tar.xz)
       sh tar "$tarargs" -xJvf "$cache_file"
     ;;
+    .zip)
+      sh unzip -o "$cache_file"
+    ;;
     *)
       stderr BUG, this should not happen
       exit 1
     ;;
   esac
 fi
-
