@@ -1,3 +1,7 @@
+7.1.0
+ - Updated for version 7.1 of ffmpeg
+ - update numerous dependencies
+
 3.9s
  - updated ffmpeg to 4.3.1
  - more switching to use repositories
