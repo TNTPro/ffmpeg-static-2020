@@ -1,0 +1,183 @@
+--- ./src/libbluray/disc/dec.c.bak
++++ ./src/libbluray/disc/dec.c
+@@ -107,7 +107,7 @@
+     X_FREE(fp);
+ }
+ 
+-BD_FILE_H *dec_open_stream(BD_DEC *dec, BD_FILE_H *fp, uint32_t clip_id)
++BD_FILE_H *libbluray_dec_open_stream(BD_DEC *dec, BD_FILE_H *fp, uint32_t clip_id)
+ {
+     DEC_STREAM *st;
+     BD_FILE_H  *p = calloc(1, sizeof(BD_FILE_H));
+@@ -284,7 +284,7 @@
+  *
+  */
+ 
+-BD_DEC *dec_init(struct dec_dev *dev, BD_ENC_INFO *enc_info,
++BD_DEC *libbluray_dec_init(struct dec_dev *dev, BD_ENC_INFO *enc_info,
+                  const char *keyfile_path,
+                  void *regs, void *psr_read, void *psr_write)
+ {
+@@ -313,7 +313,7 @@
+ 
+     if (!enc_info->aacs_handled) {
+         /* AACS failed, clean up */
+-        dec_close(&dec);
++        libbluray_dec_close(&dec);
+     }
+ 
+     /* BD+ failure may be non-fatal (not all titles in disc use BD+).
+@@ -323,7 +323,7 @@
+     return dec;
+ }
+ 
+-void dec_close(BD_DEC **pp)
++void libbluray_dec_close(BD_DEC **pp)
+ {
+     if (pp && *pp) {
+         BD_DEC *p = *pp;
+@@ -337,7 +337,7 @@
+  *
+  */
+ 
+-const uint8_t *dec_data(BD_DEC *dec, int type)
++const uint8_t *libbluray_dec_data(BD_DEC *dec, int type)
+ {
+     const uint8_t *ret = NULL;
+ 
+@@ -354,12 +354,12 @@
+     return ret;
+ }
+ 
+-const uint8_t *dec_disc_id(BD_DEC *dec)
+-{
+-    return dec_data(dec, BD_AACS_DISC_ID);
+-}
+-
+-void dec_start(BD_DEC *dec, uint32_t num_titles)
++const uint8_t *libbluray_dec_disc_id(BD_DEC *dec)
++{
++    return libbluray_dec_data(dec, BD_AACS_DISC_ID);
++}
++
++void libbluray_dec_start(BD_DEC *dec, uint32_t num_titles)
+ {
+     if (num_titles == 0) {
+         dec->use_menus = 1;
+@@ -375,7 +375,7 @@
+     }
+ }
+ 
+-void dec_title(BD_DEC *dec, uint32_t title)
++void libbluray_dec_title(BD_DEC *dec, uint32_t title)
+ {
+     if (dec->aacs) {
+         libaacs_select_title(dec->aacs, title);
+@@ -385,7 +385,7 @@
+     }
+ }
+ 
+-void dec_application(BD_DEC *dec, uint32_t data)
++void libbluray_dec_application(BD_DEC *dec, uint32_t data)
+ {
+     if (dec->bdplus) {
+         libbdplus_event(dec->bdplus, 0x210, data, 0);
+--- ./src/libbluray/disc/dec.h.bak
++++ ./src/libbluray/disc/dec.h
+@@ -45,23 +45,23 @@
+ 
+ typedef struct bd_dec BD_DEC;
+ 
+-BD_PRIVATE BD_DEC *dec_init(struct dec_dev *dev,
++BD_PRIVATE BD_DEC *libbluray_dec_init(struct dec_dev *dev,
+                             struct bd_enc_info *enc_info,
+                             const char *keyfile_path,
+                             void *regs, void *psr_read, void *psr_write);
+-BD_PRIVATE void dec_close(BD_DEC **);
++BD_PRIVATE void libbluray_dec_close(BD_DEC **);
+ 
+ /* get decoder data */
+-BD_PRIVATE const uint8_t *dec_data(BD_DEC *, int type);
+-BD_PRIVATE const uint8_t *dec_disc_id(BD_DEC *);
++BD_PRIVATE const uint8_t *libbluray_dec_data(BD_DEC *, int type);
++BD_PRIVATE const uint8_t *libbluray_dec_disc_id(BD_DEC *);
+ 
+ /* status events from upper layers */
+-BD_PRIVATE void dec_start(BD_DEC *, uint32_t num_titles);
+-BD_PRIVATE void dec_title(BD_DEC *, uint32_t title);
+-BD_PRIVATE void dec_application(BD_DEC *, uint32_t data);
++BD_PRIVATE void libbluray_dec_start(BD_DEC *, uint32_t num_titles);
++BD_PRIVATE void libbluray_dec_title(BD_DEC *, uint32_t title);
++BD_PRIVATE void libbluray_dec_application(BD_DEC *, uint32_t data);
+ 
+ /* open low-level stream */
+-BD_PRIVATE struct bd_file_s *dec_open_stream(BD_DEC *dec, struct bd_file_s *fp, uint32_t clip_id);
++BD_PRIVATE struct bd_file_s *libbluray_dec_open_stream(BD_DEC *dec, struct bd_file_s *fp, uint32_t clip_id);
+ 
+ 
+ #endif /* _BD_DISC_DEC_H_ */
+--- ./src/libbluray/disc/disc.c.bak
++++ ./src/libbluray/disc/disc.c
+@@ -348,7 +348,7 @@
+     }
+ 
+     struct dec_dev dev = { p->fs_handle, p->pf_file_open_bdrom, p, (file_openFp)disc_open_path, p->disc_root, device_path };
+-    p->dec = dec_init(&dev, enc_info, keyfile_path, regs, psr_read, psr_write);
++    p->dec = libbluray_dec_init(&dev, enc_info, keyfile_path, regs, psr_read, psr_write);
+ 
+     return p;
+ }
+@@ -358,7 +358,7 @@
+     if (pp && *pp) {
+         BD_DISC *p = *pp;
+ 
+-        dec_close(&p->dec);
++        libbluray_dec_close(&p->dec);
+ 
+         if (p->pf_fs_close) {
+             p->pf_fs_close(p->fs_handle);
+@@ -627,7 +627,7 @@
+     /* get disc ID */
+     if (p->dec) {
+         id_type = 'A';
+-        disc_id = dec_disc_id(p->dec);
++        disc_id = libbluray_dec_disc_id(p->dec);
+     }
+     if (!disc_id) {
+         id_type = 'P';
+@@ -706,7 +706,7 @@
+     }
+ 
+     if (disc->dec) {
+-        BD_FILE_H *st = dec_open_stream(disc->dec, fp, atoi(file));
++        BD_FILE_H *st = libbluray_dec_open_stream(disc->dec, fp, atoi(file));
+         if (st) {
+             return st;
+         }
+@@ -718,7 +718,7 @@
+ const uint8_t *disc_get_data(BD_DISC *disc, int type)
+ {
+     if (disc->dec) {
+-        return dec_data(disc->dec, type);
++        return libbluray_dec_data(disc->dec, type);
+     }
+     if (type == 0x1000) {
+         /* this shouldn't cause any extra optical disc access */
+@@ -737,13 +737,13 @@
+     if (disc && disc->dec) {
+         switch (event) {
+             case DISC_EVENT_START:
+-                dec_start(disc->dec, param);
++                libbluray_dec_start(disc->dec, param);
+                 return;
+             case DISC_EVENT_TITLE:
+-                dec_title(disc->dec, param);
++                libbluray_dec_title(disc->dec, param);
+                 return;
+             case DISC_EVENT_APPLICATION:
+-                dec_application(disc->dec, param);
++                libbluray_dec_application(disc->dec, param);
+                 return;
+         }
+     }
+
