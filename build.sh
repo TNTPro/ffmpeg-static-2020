@@ -451,7 +451,8 @@ do_git_checkout https://code.videolan.org/videolan/libbluray.git "$BUILD_DIR"/li
 do_git_checkout https://code.videolan.org/videolan/dav1d.git "$BUILD_DIR"/libdav1d-git master #62d8e45523b1e2dde5ca59b0bc552ff3971beb44
 
 #svn checkout http://svn.xvid.org/trunk/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
-svn checkout http://svn.xvid.org/tags/release-1_3_7/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
+#svn checkout http://svn.xvid.org/tags/release-1_3_7/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
+svn checkout https://svn.xvid.org/tags/release-1_3_7/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
 
 do_git_checkout https://code.videolan.org/videolan/x264.git "$BUILD_DIR"/x264-git master #da14df5535fd46776fb1c9da3130973295c87aca
 
