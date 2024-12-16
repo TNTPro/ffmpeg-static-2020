@@ -6,7 +6,7 @@ sudo apt install build-essential g++ gcc pkg-config unzip subversion
 sudo apt install autoconf autoconf-archive automake indent ocaml-interp cmake curl gawk git gperf libtool ragel texi2html help2man doxygen po4a xmlto libtool-bin autogen autopoint yasm bison flex mercurial
 # Install dependencies (only add if you don't build them yourself)
 sudo apt install w3m libxext-dev libgdbm-dev libsqlite3-dev libreadline6-dev libncurses5-dev libudev-dev \
-  libdbus-1-dev libaudit-dev libcrack2-dev libdb-dev libselinux1-dev libxcrypt-dev libmount-dev texinfo #libx11-dev libgavl-dev libjbig-dev
+  libdbus-1-dev libaudit-dev libcrack2-dev libdb-dev libselinux1-dev libmount-dev texinfo #libx11-dev libgavl-dev libjbig-dev
 sudo apt install \
   libbz2-dev \
   libcairo2-dev \
@@ -41,6 +41,13 @@ if [ $need_ppa -eq 1 ]; then
     sudo add-apt-repository ppa:roblib/ppa
     sudo apt-get update
     sudo apt-get install cmake
+fi
+
+# For 18.04
+libxcrypt=`echo $ubuntu_version'<=18.04' | bc -l`
+if [ $libxcrypt -eq 1 ]; then
+    sudo apt install libxcrypt-dev; else
+    sudo apt install libxcrypt-source
 fi
 
 ./build.sh "$@"
