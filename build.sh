@@ -1865,7 +1865,7 @@ make distclean
 }
 
 deps() {
-#spd-say --rate -25 "Starting dependencies"
+echo -en "\007"
 #yasm
 build_asciidoc #wants docbook-xsl-1.79.2, fop-2.5, libxslt-1.1.34, Lynx-2.8.9rel.1, dblatex, and W3m
 build_nasm #wants asciidoc-9.0.4 and xmlto-0.0.28
@@ -1896,7 +1896,8 @@ rebuild_libcdio #wants icovn, ncurses, libvcd
 }
 
 adeps() {
-#spd-say --rate -25 "Starting audio dependencies"
+echo -en "\007"
+echo -en "\007"
 build_libmysofa # wants zlib
 build_ALSAlib # need to fix for libflite
 build_voamrwbenc #
@@ -1927,7 +1928,9 @@ build_libtheora # needs ogg, wants vorbis, png
 }
 
 pdeps() {
-#spd-say --rate -25 "Starting picture dependencies"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
 build_GIFlib #
 build_libjpegturbo #
 build_libPNG #wants zlib
@@ -1943,7 +1946,10 @@ build_zimg #
 }
 
 tdeps() {
-#spd-say --rate -25 "Starting text dependencies"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
 build_FreeType2 #wants harfbuzz, zlib, linpng, bzip2
 build_FontConfig #wants iconv, freetype2, expat, XML, jsonc
 build_harfbuzz #wants glib, icu, freetype2, cairo, fontconfig, graphite2, coretext, directwrite, GDI, uniscribe
@@ -1960,7 +1966,11 @@ build_frei0r # opencv, gavl, cairo
 }
 
 vdeps() {
-#spd-say --rate -25 "Starting video dependencies"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
 build_libbluray #wants libxml2, freetype2, fontconfig
 build_dav1d #wants nasm, meson, ninja, doxygen, dot
 build_Xvid #wants yasm,
@@ -2004,7 +2014,12 @@ echo
 echo $vdp_time
 vdeps
 
-#spd-say --rate -25 "Dependencies built"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
 
 ff_time=$(date +%H:%M)
 echo
@@ -2020,5 +2035,11 @@ echo Video Dependencies Started:	$vdp_time
 echo ffmpeg Started:			$ff_time
 finish_time=$(date +%H:%M)
 echo $finish_time
-#spd-say --rate -25 "Build Complete"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
 hash -r
