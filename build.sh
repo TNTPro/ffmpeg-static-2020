@@ -1893,7 +1893,6 @@ rebuild_libcdio #wants icovn, ncurses, libvcd
 
 adeps() {
 echo -en "\007"
-echo -en "\007"
 build_libmysofa # wants zlib
 build_ALSAlib # need to fix for libflite
 build_voamrwbenc #
@@ -1925,8 +1924,6 @@ build_libtheora # needs ogg, wants vorbis, png
 
 pdeps() {
 echo -en "\007"
-echo -en "\007"
-echo -en "\007"
 build_GIFlib #
 build_libjpegturbo #
 build_libPNG #wants zlib
@@ -1942,9 +1939,6 @@ build_zimg #
 }
 
 tdeps() {
-echo -en "\007"
-echo -en "\007"
-echo -en "\007"
 echo -en "\007"
 build_FreeType2 #wants harfbuzz, zlib, linpng, bzip2
 build_FontConfig #wants iconv, freetype2, expat, XML, jsonc
@@ -1962,10 +1956,6 @@ build_frei0r # opencv, gavl, cairo
 }
 
 vdeps() {
-echo -en "\007"
-echo -en "\007"
-echo -en "\007"
-echo -en "\007"
 echo -en "\007"
 build_libbluray #wants libxml2, freetype2, fontconfig
 build_dav1d #wants nasm, meson, ninja, doxygen, dot
@@ -2011,11 +2001,6 @@ echo $vdp_time
 vdeps
 
 echo -en "\007"
-echo -en "\007"
-echo -en "\007"
-echo -en "\007"
-echo -en "\007"
-echo -en "\007"
 
 ff_time=$(date +%H:%M)
 echo
@@ -2031,11 +2016,5 @@ echo Video Dependencies Started:	$vdp_time
 echo ffmpeg Started:			$ff_time
 finish_time=$(date +%H:%M)
 echo $finish_time
-echo -en "\007"
-echo -en "\007"
-echo -en "\007"
-echo -en "\007"
-echo -en "\007"
-echo -en "\007"
 echo -en "\007"
 hash -r
