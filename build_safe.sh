@@ -421,9 +421,8 @@ do_git_checkout https://github.com/libass/libass.git "$BUILD_DIR"/libass-git 7d8
 # >1.82.0 causes tesseract not found using pkg-config error
 do_git_checkout https://github.com/DanBloomberg/leptonica.git "$BUILD_DIR"/leptonica-git 1.82.0 #1.81.0 #master
 
-#do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 4.1
 #do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git a2e72f258a3bd6811cae226a01802d891407409f # #315
-do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 2a944fbe98ed4408a5f0fd5693c398a9cebaf6d4 #main #66cf74f2dd82790444ef321d3bf03fa303e9caef #4.0.0-beta.3
+do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 4.1 #2a944fbe98ed4408a5f0fd5693c398a9cebaf6d4 #main #66cf74f2dd82790444ef321d3bf03fa303e9caef #4.0.0-beta.3
 
 download \
   "libid3tag-0.15.1b.tar.gz" \
