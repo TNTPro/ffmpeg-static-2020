@@ -1974,13 +1974,13 @@ alldownloads
 dp_time=$(date +%H:%M)
 echo
 echo $dp_time
-#deps
+deps
 #echo "Press ENTER to continue" && bash -c read -p
 
 adp_time=$(date +%H:%M)
 echo
 echo $adp_time
-#adeps
+adeps
 #echo "Press ENTER to continue" && bash -c read -p
 
 pdp_time=$(date +%H:%M)
