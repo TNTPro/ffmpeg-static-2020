@@ -55,6 +55,7 @@ if [ $version -eq 1 ]; then
     ./configure
     make -j 4
     sudo make install
+    sudo apt remove libnss3-dev libssl-dev libreadline-dev libffi-dev -y
 fi
 
 # For 18.04
