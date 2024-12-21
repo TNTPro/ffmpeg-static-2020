@@ -360,7 +360,7 @@ do_git_checkout https://github.com/xiph/theora.git $BUILD_DIR/libtheora-git 7180
 
 ### pdeps
 
-do_git_checkout https://git.code.sf.net/u/ffontaine35/giflib "$BUILD_DIR"/giflib-ffontaine35-git dd8b375e2a5ddfabb9709c99e38bbe0fd3b212a4 #master
+do_git_checkout https://git.code.sf.net/u/ffontaine35/giflib "$BUILD_DIR"/giflib-ffontaine35-git 5.2.1 #dd8b375e2a5ddfabb9709c99e38bbe0fd3b212a4 #master
 
 do_git_checkout https://github.com/libjpeg-turbo/libjpeg-turbo.git $BUILD_DIR/libjpeg-turbo-git e0e18dea5433e600ea92d60814f13efa40a0d7dd #main #d7932a270921391c303b6ede6f1dfbd94290a3d8
 
@@ -1974,13 +1974,13 @@ alldownloads
 dp_time=$(date +%H:%M)
 echo
 echo $dp_time
-deps
+#deps
 #echo "Press ENTER to continue" && bash -c read -p
 
 adp_time=$(date +%H:%M)
 echo
 echo $adp_time
-adeps
+#adeps
 #echo "Press ENTER to continue" && bash -c read -p
 
 pdp_time=$(date +%H:%M)
