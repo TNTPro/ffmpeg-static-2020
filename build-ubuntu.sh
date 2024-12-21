@@ -32,10 +32,11 @@ sudo apt install \
 #  libxvidcore-dev \
 #  zlib1g-dev
 
+ubuntu_version=`lsb_release -rs`
+
 # For 12.04
 # libx265 requires cmake version >= 2.8.8
 # 12.04 only have 2.8.7
-ubuntu_version=`lsb_release -rs`
 need_ppa=`echo $ubuntu_version'<=12.04' | bc -l`
 if [ $need_ppa -eq 1 ]; then
     sudo add-apt-repository ppa:roblib/ppa
