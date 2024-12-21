@@ -43,11 +43,11 @@ if [ $need_ppa -eq 1 ]; then
     sudo apt-get install cmake
 fi
 
-# For 18.04
-libxcrypt=`echo $ubuntu_version'<=18.04' | bc -l`
-if [ $libxcrypt -eq 1 ]; then
-    sudo apt install libxcrypt-dev; else
-    sudo apt install libxcrypt-source
-fi
+## For 18.04
+#libxcrypt=`echo $ubuntu_version'<=18.04' | bc -l`
+#if [ $libxcrypt -eq 1 ]; then
+#    sudo apt install libxcrypt-dev; else
+#    sudo apt install libxcrypt-source
+#fi
 
 ./build.sh "$@"
