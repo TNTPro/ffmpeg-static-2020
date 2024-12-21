@@ -43,11 +43,14 @@ if [ $need_ppa -eq 1 ]; then
     sudo apt-get install cmake
 fi
 
-## For 18.04
-#libxcrypt=`echo $ubuntu_version'<=18.04' | bc -l`
-#if [ $libxcrypt -eq 1 ]; then
+# For 18.04
+version=`echo $ubuntu_version'<=18.04' | bc -l`
+if [ $version -eq 1 ]; then
 #    sudo apt install libxcrypt-dev; else
 #    sudo apt install libxcrypt-source
-#fi
+    sudo apt install python3.8 -y
+    sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
+    sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2
+fi
 
 ./build.sh "$@"
