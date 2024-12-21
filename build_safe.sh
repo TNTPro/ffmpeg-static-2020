@@ -63,6 +63,7 @@ case $OS in
     platform='linux'
     ;;
 esac
+ubuntu_version=`lsb_release -rs`
 
 #if you want a rebuild
 #rm -rf "$BUILD_DIR" "$TARGET_DIR"
@@ -421,8 +422,14 @@ do_git_checkout https://github.com/libass/libass.git "$BUILD_DIR"/libass-git 7d8
 # >1.82.0 causes tesseract not found using pkg-config error
 do_git_checkout https://github.com/DanBloomberg/leptonica.git "$BUILD_DIR"/leptonica-git 1.82.0 #1.81.0 #master
 
+version=`echo $ubuntu_version'<=18.04' | bc -l`
+if [ $version -eq 1 ]; then
+    do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 4.1
+else
+    do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 2a944fbe98ed4408a5f0fd5693c398a9cebaf6d4 #main #66cf74f2dd82790444ef321d3bf03fa303e9caef #4.0.0-beta.3
+fi
 #do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git a2e72f258a3bd6811cae226a01802d891407409f # #315
-do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 4.1 #2a944fbe98ed4408a5f0fd5693c398a9cebaf6d4 #main #66cf74f2dd82790444ef321d3bf03fa303e9caef #4.0.0-beta.3
+
 
 download \
   "libid3tag-0.15.1b.tar.gz" \
@@ -437,7 +444,12 @@ do_git_checkout https://github.com/cacalabs/libcaca.git "$BUILD_DIR"/libcaca-git
 
 do_git_checkout https://github.com/TimothyGu/libilbc.git "$BUILD_DIR"/libilbc-git 7b350230ac8793078be081ed8386f20c80681046 #debian
 
-do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git v1.10.0 #master
+version=`echo $ubuntu_version'<=16.04' | bc -l`
+if [ $version -eq 1 ]; then
+    do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git v1.9.6;
+else
+    do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git v1.10.0 #master
+fi
 
 ### vdeps
 
