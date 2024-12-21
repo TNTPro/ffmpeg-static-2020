@@ -43,8 +43,22 @@ if [ $need_ppa -eq 1 ]; then
     sudo apt-get install cmake
 fi
 
+# For 16.04
+version=`echo $ubuntu_version'<=16.04' | bc -l`
+if [ $version -eq 1 ]; then
+#    sudo apt install libxcrypt-dev; else
+#    sudo apt install libxcrypt-source
+    sudo apt install libnss3-dev libssl-dev libreadline-dev libffi-dev -y
+    wget https://www.python.org/ftp/python/3.7.4/Python-3.7.4.tgz
+    tar xzf Python-3.7.4.tgz
+    cd Python-3.7.4
+    ./configure
+    make -j 4
+    sudo make install
+fi
+
 # For 18.04
-version=`echo $ubuntu_version'<=18.04' | bc -l`
+version=`echo $ubuntu_version'==18.04' | bc -l`
 if [ $version -eq 1 ]; then
 #    sudo apt install libxcrypt-dev; else
 #    sudo apt install libxcrypt-source
