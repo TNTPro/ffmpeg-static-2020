@@ -3,7 +3,7 @@
 # Install needed tools
 sudo apt install build-essential g++ gcc pkg-config unzip subversion
 # Install extra tools
-sudo apt install autoconf autoconf-archive automake indent ocaml-interp cmake curl gawk git gperf libtool ragel texi2html help2man doxygen po4a xmlto libtool-bin autogen autopoint yasm bison flex mercurial
+sudo apt install autoconf autoconf-archive automake indent ocaml-interp cmake curl gawk git gperf libtool ragel texi2html help2man po4a xmlto libtool-bin autogen autopoint yasm bison flex mercurial
 # Install dependencies (only add if you don't build them yourself)
 sudo apt install w3m libxext-dev libgdbm-dev libsqlite3-dev libreadline6-dev libncurses5-dev libudev-dev \
   libdbus-1-dev libaudit-dev libcrack2-dev libdb-dev libselinux1-dev libmount-dev texinfo #libx11-dev libgavl-dev libjbig-dev
@@ -67,6 +67,12 @@ if [ $version -eq 1 ]; then
     sudo apt install python3.8 -y
     sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
     sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2
+fi
+
+# For 20.04
+version=`echo $ubuntu_version'<=20.04' | bc -l`
+if [ $version -eq 1 ]; then
+    sudo apt install doxygen -y
 fi
 
 ./build.sh "$@"
