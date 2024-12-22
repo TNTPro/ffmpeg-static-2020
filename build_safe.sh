@@ -312,8 +312,12 @@ do_git_checkout https://github.com/xiph/opus.git "$BUILD_DIR"/opus-git 7db26934e
 do_git_checkout https://git.code.sf.net/p/soxr/code "$BUILD_DIR"/soxr-git 945b592b70470e29f917f4de89b4281fbbd540c0 #master #0.1.3
 
 #do_git_checkout https://github.com/kubo/flite.git $BUILD_DIR/flite-git master #4681a5fb82afb9036c6dd6a9303892f8dc7b8e69
-#do_git_checkout https://github.com/festvox/flite.git $BUILD_DIR/flite-git master #
-do_git_checkout https://github.com/TNTPro/ffmpeg-libflite2.0.0.git $BUILD_DIR/flite-git a193a909265fc6a91b15d8d5f136d30d000c2ea3 #main
+version=`echo $ubuntu_version'<=20.04' | bc -l`
+if [ $version -eq 1 ]; then
+    do_git_checkout https://github.com/TNTPro/ffmpeg-libflite2.0.0.git $BUILD_DIR/flite-git a193a909265fc6a91b15d8d5f136d30d000c2ea3 #main
+else
+    do_git_checkout https://github.com/festvox/flite.git $BUILD_DIR/flite-git 6c9f20dc915b17f5619340069889db0aa007fcdc #master
+fi
 
 do_git_checkout https://github.com/google/snappy.git $BUILD_DIR/snappy-git 32ded457c0b1fe78ceb8397632c416568d6714a0 #main #1.1.9
 cd $BUILD_DIR/snappy-git
