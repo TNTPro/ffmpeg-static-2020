@@ -378,7 +378,7 @@ download \
   "tiff-4.7.0.tar.gz" \
   "" \
   "nil" \
-  "https//download.osgeo.org/libtiff/" #4.2.0 #4.7.0
+  "https://download.osgeo.org/libtiff/" #4.2.0 #4.7.0
 #do_git_checkout https://gitlab.com/libtiff/libtiff.git "$BUILD_DIR"/tiff-git v4.1.0 #master #4.1.0
 
 #download \
