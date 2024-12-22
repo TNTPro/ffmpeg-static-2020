@@ -2,7 +2,7 @@
 #
 # Small utility to fetch and unpack archives on the web (with cache)
 #
-# Depends on : curl, tar
+# Depends on : curl, tar, unzip
 #
 
 set -e
