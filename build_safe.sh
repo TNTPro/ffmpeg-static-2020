@@ -469,6 +469,8 @@ do_git_checkout https://code.videolan.org/videolan/x264.git "$BUILD_DIR"/x264-gi
 
 do_git_checkout https://bitbucket.org/multicoreware/x265_git.git "$BUILD_DIR"/x265-git fa2770934b8f3d88aa866c77f27cb63f69a9ed39 #master #3.2.1
 
+do_git_checkout https://github.com/fraunhoferhhi/vvenc.git "$BUILD_DIR"/vvenc-git v1.13.0
+
 do_git_checkout https://chromium.googlesource.com/webm/libvpx "$BUILD_DIR"/libvpx-git 2c38ade434e51c6b1980a675b1c8cbee229b49ff #main #1.8.2
 
 do_git_checkout https://github.com/georgmartius/vid.stab.git vid.stab-git 8dff7ad3c10ac663745f2263037f6e42b993519c #master #0.98b
@@ -1648,6 +1650,19 @@ echo
   make install
 }
 
+build_vvenc() {
+echo
+/bin/echo -e "\e[93m*** Building vvenc ***\e[39m"
+echo
+  cd $BUILD_DIR/vvenc-*
+    mkdir -p build
+    cd build
+    cmake -G "Unix Makefiles" .. -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=0 #  -DCMAKE_INSTALL_DATAROOTDIR=$TARGET_DIR -DCMAKE_INSTALL_LIBDIR=$TARGET_DIR/lib
+    make -j $jval
+    make install
+#    cmake --build .
+}
+
 build_libvpx() {
 echo
 /bin/echo -e "\e[93m*** Building libvpx ***\e[39m"
@@ -1757,6 +1772,7 @@ if [ "$platform" = "linux" ]; then
     --enable-libwebp \
     --enable-libx264 \
     --enable-libx265 \
+    --enable-libvvenc \
     --enable-libxcb \
     --enable-libxcb-shm \
     --enable-libxcb-xfixes \
@@ -1864,6 +1880,7 @@ elif [ "$platform" = "darwin" ]; then
     --enable-libwebp \
     --enable-libx264 \
     --enable-libx265 \
+    --enable-libvvenc \
     --enable-libxvid \
     --enable-libzimg \
     --enable-nonfree \
@@ -1977,6 +1994,7 @@ build_dav1d #wants nasm, meson, ninja, doxygen, dot
 build_Xvid #wants yasm,
 build_x264 #
 build_x265 #wants numa, nasm
+build_vvenc
 build_libvpx #
 build_libvidstab #
 build_libaom #
@@ -2033,4 +2051,3 @@ finish_time=$(date +%H:%M)
 echo $finish_time
 echo -en "\007"
 hash -r
-
