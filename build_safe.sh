@@ -180,7 +180,7 @@ echo_and_exit() {
 }
 
 echo
-/bin/echo -e "\e[93m#### FFmpeg static build ####\e[39m"
+/bin/echo -e "\e[93m#### Safe FFmpeg static build ####\e[39m"
 echo
 
 #this is our working directory
