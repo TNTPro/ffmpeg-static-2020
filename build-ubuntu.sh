@@ -6,7 +6,7 @@ set -e
 
 ShowUsage() {
     echo ""
-    echo "Usage  :           ./test.sh [--safe] [--help]"
+    echo "Usage  :           ./build-ubuntu.sh [-s] [-h]"
     echo ""
     echo "Options:"
     echo "  -s / --safe:     This version should build OK"
