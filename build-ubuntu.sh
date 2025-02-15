@@ -1,5 +1,34 @@
 #!/bin/bash
 
+# Author: Tec
+
+set -e
+
+ShowUsage() {
+    echo ""
+    echo "Usage  :           ./test.sh [--safe] [--help]"
+    echo ""
+    echo "Options:"
+    echo "  -s / --safe:     This version should build OK"
+    echo "  -h / --help :    This help screen"
+    echo ""
+    exit 0
+}
+
+script=build
+
+root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+params=$(getopt -n $0 -o sh --long safe,help -- "$@")
+eval set -- $params
+while true ; do
+    case "$1" in
+        -h|--help) ShowUsage ;;
+        -s|--safe) script=build_safe; shift;;
+        *) shift; break ;;
+    esac
+done
+
 # Install needed tools
 sudo apt install build-essential g++ gcc pkg-config unzip subversion
 # Install extra tools
@@ -75,4 +104,4 @@ if [ $version -eq 1 ]; then
     sudo apt install doxygen -y
 fi
 
-./build.sh "$@"
+./$script.sh "$@"
