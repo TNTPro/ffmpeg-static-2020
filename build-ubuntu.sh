@@ -6,11 +6,11 @@ set -e
 
 ShowUsage() {
     echo ""
-    echo "Usage  :           ./build-ubuntu.sh [-s] [-h]"
+    echo "Usage  :    ./build-ubuntu.sh [-s] [-h]"
     echo ""
     echo "Options:"
-    echo "  -s / --safe:     This version should build OK"
-    echo "  -h / --help :    This help screen"
+    echo "    -s :    Try Bleeding Edge Build"
+    echo "    -h :    This help screen"
     echo ""
     exit 0
 }
@@ -24,7 +24,7 @@ eval set -- $params
 while true ; do
     case "$1" in
         -h|--help) ShowUsage ;;
-        -s|--safe) script=build_safe; shift;;
+        -s|--safe) script=build_be; shift;;
         *) shift; break ;;
     esac
 done

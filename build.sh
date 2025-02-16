@@ -63,6 +63,7 @@ case $OS in
     platform='linux'
     ;;
 esac
+ubuntu_version=`lsb_release -rs`
 
 #if you want a rebuild
 #rm -rf "$BUILD_DIR" "$TARGET_DIR"
@@ -179,7 +180,7 @@ echo_and_exit() {
 }
 
 echo
-/bin/echo -e "\e[93m#### FFmpeg static build ####\e[39m"
+/bin/echo -e "\e[93m#### Safe FFmpeg static build ####\e[39m"
 echo
 
 #this is our working directory
@@ -240,9 +241,9 @@ do_git_checkout https://github.com/libffi/libffi.git "$BUILD_DIR"/libffi-git v3.
 # v5.6.0, v5.6.1 causes Segmentation fault (core dumped)
 do_git_checkout https://git.tukaani.org/xz.git "$BUILD_DIR"/xz-git v5.6.3 #v5.4.7 #v5.2.4 # master # v5.2.4
 
-do_git_checkout https://github.com/madler/zlib.git "$BUILD_DIR"/zlib-git master #51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf
+do_git_checkout https://github.com/madler/zlib.git "$BUILD_DIR"/zlib-git 51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf
 
-do_git_checkout https://github.com/facebook/zstd.git "$BUILD_DIR"/zstd-git release #v1.5.6 #dev
+do_git_checkout https://github.com/facebook/zstd.git "$BUILD_DIR"/zstd-git v1.5.6 #release #dev
 
 #download \
 #  "tcl8.6.10-src.tar.gz" \
@@ -260,7 +261,7 @@ do_git_checkout https://github.com/libexpat/libexpat.git "$BUILD_DIR"/libexpat-g
 
 do_git_checkout https://github.com/openssl/openssl.git "$BUILD_DIR"/openssl-old-git OpenSSL_1_0_2u
 
-do_git_checkout https://git.ffmpeg.org/rtmpdump "$BUILD_DIR"/rtmpdump-git master #6f6bb1353fc84f4cc37138baa99f586750028a01
+do_git_checkout https://git.ffmpeg.org/rtmpdump "$BUILD_DIR"/rtmpdump-git 6f6bb1353fc84f4cc37138baa99f586750028a01
 
 #do_git_checkout https://github.com/openssl/openssl.git "$BUILD_DIR"/openssl-git OpenSSL_1_1_1d #OpenSSL_1_1_0l
 
@@ -288,33 +289,37 @@ do_git_checkout https://git.savannah.gnu.org/git/libcdio.git "$BUILD_DIR"/libcdi
 
 do_git_checkout https://github.com/rocky/libcdio-paranoia.git "$BUILD_DIR"/libcdio-paranoia-git release-10.2+2.0.1 #master
 
-do_git_checkout https://github.com/rocky/vcdimager.git "$BUILD_DIR"/vcdimager-git master #23f0738652e1cc0cab52b6e8a44f806e9e5e5739
+do_git_checkout https://github.com/rocky/vcdimager.git "$BUILD_DIR"/vcdimager-git 23f0738652e1cc0cab52b6e8a44f806e9e5e5739 #master
 
 ### adeps
 
-do_git_checkout https://github.com/hoene/libmysofa.git "$BUILD_DIR"/libmysofa-git latest #dd315a8ec1fee7193d40e4a59b12c5590a4a918c #v1.3.3 #v1.1 #1.0
+do_git_checkout https://github.com/hoene/libmysofa.git "$BUILD_DIR"/libmysofa-git dd315a8ec1fee7193d40e4a59b12c5590a4a918c #latest #v1.3.3 #v1.1 #1.0
 
-do_git_checkout https://github.com/alsa-project/alsa-lib.git "$BUILD_DIR"/alsa-lib-git master #352cbc5eb94a271a9c3c0ff5bf1742232a69e0d0 #v1.2.12 #v1.2.1.2 #master
+do_git_checkout https://github.com/alsa-project/alsa-lib.git "$BUILD_DIR"/alsa-lib-git 352cbc5eb94a271a9c3c0ff5bf1742232a69e0d0 #master #v1.2.12 #v1.2.1.2 #master
 #v1.2.1.2 1c7e46d5d8bc3c213d7963056240b385f3d8727b #v1.2.12 34422861f5549aee3e9df9fd8240d10b530d9abd #1.2.13pre a3865b2439ce686024bc83b3b9b1cd60fa75986c
 
-do_git_checkout https://github.com/mstorsjo/vo-amrwbenc.git "$BUILD_DIR"/vo-amrwbenc-git master #3b3fcd0d250948e74cd67e7ea81af431ab3928f9 #0.1.3
+do_git_checkout https://github.com/mstorsjo/vo-amrwbenc.git "$BUILD_DIR"/vo-amrwbenc-git 3b3fcd0d250948e74cd67e7ea81af431ab3928f9 #master #0.1.3
 
-do_git_checkout https://github.com/BelledonneCommunications/opencore-amr.git "$BUILD_DIR"/opencore-amr-git master #3b67218fb8efb776bcd79e7445774e02d778321d #0.1.3
+do_git_checkout https://github.com/BelledonneCommunications/opencore-amr.git "$BUILD_DIR"/opencore-amr-git 3b67218fb8efb776bcd79e7445774e02d778321d #master #0.1.3
 
-do_git_checkout https://github.com/mstorsjo/fdk-aac.git "$BUILD_DIR"/fdk-aac-git master #716f4394641d53f0d79c9ddac3fa93b03a49f278 #2.0.1
+do_git_checkout https://github.com/mstorsjo/fdk-aac.git "$BUILD_DIR"/fdk-aac-git 716f4394641d53f0d79c9ddac3fa93b03a49f278 #master #2.0.1
 
 do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame "$BUILD_DIR"/lame-svn 6509 #6507 #6449 #3.100
 # build 6510 and newer require libtool 2.4.7
 
-do_git_checkout https://github.com/xiph/opus.git "$BUILD_DIR"/opus-git main #7db26934e4156597cb0586bb4d2e44dccdde1a59 #1.3.1
+do_git_checkout https://github.com/xiph/opus.git "$BUILD_DIR"/opus-git 7db26934e4156597cb0586bb4d2e44dccdde1a59 #main #1.3.1
 
-do_git_checkout https://git.code.sf.net/p/soxr/code "$BUILD_DIR"/soxr-git master #945b592b70470e29f917f4de89b4281fbbd540c0 #0.1.3
+do_git_checkout https://git.code.sf.net/p/soxr/code "$BUILD_DIR"/soxr-git 945b592b70470e29f917f4de89b4281fbbd540c0 #master #0.1.3
 
 #do_git_checkout https://github.com/kubo/flite.git $BUILD_DIR/flite-git master #4681a5fb82afb9036c6dd6a9303892f8dc7b8e69
-#do_git_checkout https://github.com/festvox/flite.git $BUILD_DIR/flite-git master #
-do_git_checkout https://github.com/TNTPro/ffmpeg-libflite2.0.0.git $BUILD_DIR/flite-git main #a193a909265fc6a91b15d8d5f136d30d000c2ea3
+version=`echo $ubuntu_version'<=20.04' | bc -l`
+if [ $version -eq 1 ]; then
+    do_git_checkout https://github.com/TNTPro/ffmpeg-libflite2.0.0.git $BUILD_DIR/flite-git a193a909265fc6a91b15d8d5f136d30d000c2ea3 #main
+else
+    do_git_checkout https://github.com/festvox/flite.git $BUILD_DIR/flite-git 6c9f20dc915b17f5619340069889db0aa007fcdc #master
+fi
 
-do_git_checkout https://github.com/google/snappy.git $BUILD_DIR/snappy-git main #32ded457c0b1fe78ceb8397632c416568d6714a0 #1.1.9
+do_git_checkout https://github.com/google/snappy.git $BUILD_DIR/snappy-git 32ded457c0b1fe78ceb8397632c416568d6714a0 #main #1.1.9
 cd $BUILD_DIR/snappy-git
 [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
 git submodule update --init
@@ -330,26 +335,26 @@ download \
 #do_git_checkout https://github.com/FFTW/fftw3.git $BUILD_DIR/fftw3-git fftw-3.3.6-pl2 #master
 # need ocaml, ocamlbuild & special tools to build from git
 
-do_git_checkout https://github.com/xiph/ogg.git $BUILD_DIR/ogg-git master #db5c7a49ce7ebda47b15b78471e78fb7f2483e22 #1.3.4
+do_git_checkout https://github.com/xiph/ogg.git $BUILD_DIR/ogg-git db5c7a49ce7ebda47b15b78471e78fb7f2483e22 #master #1.3.4
 
-do_git_checkout https://github.com/xiph/flac.git $BUILD_DIR/flac-git master #30cdb4d397087e5f4949b8ce114571306544f346 #5152c6cace63ee11d422c1ef9589a9a0a5d034b2
+do_git_checkout https://github.com/xiph/flac.git $BUILD_DIR/flac-git 30cdb4d397087e5f4949b8ce114571306544f346 #master #5152c6cace63ee11d422c1ef9589a9a0a5d034b2
 
-do_git_checkout https://github.com/xiph/vorbis.git $BUILD_DIR/vorbis-git master #84c023699cdf023a32fa4ded32019f194afcdad0 #1.3.6
+do_git_checkout https://github.com/xiph/vorbis.git $BUILD_DIR/vorbis-git 84c023699cdf023a32fa4ded32019f194afcdad0 #master #1.3.6
 
-do_git_checkout https://github.com/xiph/speexdsp.git "$BUILD_DIR"/speexdsp-git master #dbd421d149a9c362ea16150694b75b63d757a521
+do_git_checkout https://github.com/xiph/speexdsp.git "$BUILD_DIR"/speexdsp-git dbd421d149a9c362ea16150694b75b63d757a521 #master
 
-do_git_checkout https://github.com/xiph/speex.git $BUILD_DIR/speex-git master #aca6801183bad01458140dbbab71a68a02e5a561 #1.2.0
+do_git_checkout https://github.com/xiph/speex.git $BUILD_DIR/speex-git aca6801183bad01458140dbbab71a68a02e5a561 #master #1.2.0
 
-do_git_checkout https://github.com/erikd/libsndfile.git $BUILD_DIR/libsndfile-git master #0d3f80b7394368623df558d8ba3fee6348584d4d #58c05b87162264200b1aa7790be260fd74c9deee
+do_git_checkout https://github.com/erikd/libsndfile.git $BUILD_DIR/libsndfile-git 0d3f80b7394368623df558d8ba3fee6348584d4d #master #58c05b87162264200b1aa7790be260fd74c9deee
 
-do_git_checkout https://github.com/erikd/libsamplerate.git $BUILD_DIR/libsamplerate-git master #4858fb016550d677de2356486bcceda5aed85a72
+do_git_checkout https://github.com/erikd/libsamplerate.git $BUILD_DIR/libsamplerate-git 4858fb016550d677de2356486bcceda5aed85a72 #master
 
 # Versions >1.9 require meson
 do_git_checkout https://github.com/breakfastquay/rubberband.git $BUILD_DIR/rubberband-git v1.9 #default
 
-do_git_checkout https://github.com/njh/twolame.git $BUILD_DIR/twolame-git main #90b694b6125dbe23a346bd5607a7fb63ad2785dc #0.4.0
+do_git_checkout https://github.com/njh/twolame.git $BUILD_DIR/twolame-git 90b694b6125dbe23a346bd5607a7fb63ad2785dc #main #0.4.0
 
-do_git_checkout https://github.com/xiph/theora.git $BUILD_DIR/libtheora-git master #7180717276af1ebc7da15c83162d6c5d6203aabf #1.1.1
+do_git_checkout https://github.com/xiph/theora.git $BUILD_DIR/libtheora-git 7180717276af1ebc7da15c83162d6c5d6203aabf #master #1.1.1
 
 ##download \
 ##  "master.tar.gz" \
@@ -360,11 +365,11 @@ do_git_checkout https://github.com/xiph/theora.git $BUILD_DIR/libtheora-git mast
 
 ### pdeps
 
-do_git_checkout https://git.code.sf.net/u/ffontaine35/giflib "$BUILD_DIR"/giflib-ffontaine35-git master #dd8b375e2a5ddfabb9709c99e38bbe0fd3b212a4
+do_git_checkout https://git.code.sf.net/u/ffontaine35/giflib "$BUILD_DIR"/giflib-ffontaine35-git 5.2.1 #dd8b375e2a5ddfabb9709c99e38bbe0fd3b212a4 #master
 
-do_git_checkout https://github.com/libjpeg-turbo/libjpeg-turbo.git $BUILD_DIR/libjpeg-turbo-git main #e0e18dea5433e600ea92d60814f13efa40a0d7dd #d7932a270921391c303b6ede6f1dfbd94290a3d8
+do_git_checkout https://github.com/libjpeg-turbo/libjpeg-turbo.git $BUILD_DIR/libjpeg-turbo-git e0e18dea5433e600ea92d60814f13efa40a0d7dd #main #d7932a270921391c303b6ede6f1dfbd94290a3d8
 
-do_git_checkout https://github.com/glennrp/libpng.git "$BUILD_DIR"/libpng-git master #c1cc0f3f4c3d4abd11ca68c59446a29ff6f95003
+do_git_checkout https://github.com/glennrp/libpng.git "$BUILD_DIR"/libpng-git c1cc0f3f4c3d4abd11ca68c59446a29ff6f95003 #master
 
 # >1.3.0 cause tessaract pkg_config errors
 do_git_checkout https://github.com/webmproject/libwebp "$BUILD_DIR"/libwebp-git 1.3.0 #1.3.0 #1.2.4 #1.1.0 main 
@@ -391,7 +396,7 @@ download \
 # >v2.10.1 needs Automake 1.16.3
 do_git_checkout https://gitlab.gnome.org/GNOME/libxml2.git "$BUILD_DIR"/libxml2-git v2.10.1 #v2.9.14 #master
 
-do_git_checkout https://github.com/uclouvain/openjpeg.git "$BUILD_DIR"/openjpeg-git master #eb25a5ec777ff6699f4bb1187740467dcfa64dd6 #2.3.1
+do_git_checkout https://github.com/uclouvain/openjpeg.git "$BUILD_DIR"/openjpeg-git eb25a5ec777ff6699f4bb1187740467dcfa64dd6 #master #2.3.1
 
 # >v0.3.3 causes "can't find setuptools error" used instead of distutils (python)
 do_git_checkout https://github.com/lensfun/lensfun.git "$BUILD_DIR"/lensfun-git v0.3.3 #v0.3.1 #v0.3.95 #master
@@ -411,19 +416,24 @@ download \
 do_git_checkout https://gitlab.freedesktop.org/fontconfig/fontconfig.git "$BUILD_DIR"/fontconfig-git 2.14.2 #main
 
 # libass dependency 
-do_git_checkout https://github.com/harfbuzz/harfbuzz.git "$BUILD_DIR"/harfbuzz-git main #3258b1f2482a522f7edebecb11ffb061cd050abd #0b7beefd0b268c1ec52935937f4abc7e7a3bc3e5 #8.5.0
+do_git_checkout https://github.com/harfbuzz/harfbuzz.git "$BUILD_DIR"/harfbuzz-git 3258b1f2482a522f7edebecb11ffb061cd050abd #main #0b7beefd0b268c1ec52935937f4abc7e7a3bc3e5 #8.5.0
 
-do_git_checkout https://github.com/fribidi/fribidi.git "$BUILD_DIR"/fribidi-git master #cfc71cda065db859d8b4f1e3c6fe5da7ab02469a #v1.0.16 #1.0.8
+do_git_checkout https://github.com/fribidi/fribidi.git "$BUILD_DIR"/fribidi-git cfc71cda065db859d8b4f1e3c6fe5da7ab02469a #master #v1.0.16 #1.0.8
 #do_git_checkout https://github.com/Oxalin/fribidi.git "$BUILD_DIR"/fribidi-git doxygen
 
-do_git_checkout https://github.com/libass/libass.git "$BUILD_DIR"/libass-git master #7d8e335b094f00c57fb557b01e93b60a17e63434 #4df64d060a8a89b2cd54678190426079bb9d49a6 #0.14.0
+do_git_checkout https://github.com/libass/libass.git "$BUILD_DIR"/libass-git 7d8e335b094f00c57fb557b01e93b60a17e63434 #master #4df64d060a8a89b2cd54678190426079bb9d49a6 #0.14.0
 
 # >1.82.0 causes tesseract not found using pkg-config error
 do_git_checkout https://github.com/DanBloomberg/leptonica.git "$BUILD_DIR"/leptonica-git 1.82.0 #1.81.0 #master
 
-#do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 4.1
+version=`echo $ubuntu_version'<=18.04' | bc -l`
+if [ $version -eq 1 ]; then
+    do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 4.1
+else
+    do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 2a944fbe98ed4408a5f0fd5693c398a9cebaf6d4 #main #66cf74f2dd82790444ef321d3bf03fa303e9caef #4.0.0-beta.3
+fi
 #do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git a2e72f258a3bd6811cae226a01802d891407409f # #315
-do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git main #2a944fbe98ed4408a5f0fd5693c398a9cebaf6d4 #66cf74f2dd82790444ef321d3bf03fa303e9caef #4.0.0-beta.3
+
 
 download \
   "libid3tag-0.15.1b.tar.gz" \
@@ -431,37 +441,42 @@ download \
   "e5808ad997ba32c498803822078748c3" \
   "https://sourceforge.net/projects/mad/files/"
 
-do_git_checkout https://git.enlightenment.org/old/legacy-imlib2.git "$BUILD_DIR"/imlib2-git master #b03d3f042bdfb3ee3f66c08c0e41f10b2aaba172 #62d8e45523b1e2dde5ca59b0bc552ff3971beb44 #1.6.1
+do_git_checkout https://git.enlightenment.org/old/legacy-imlib2.git "$BUILD_DIR"/imlib2-git b03d3f042bdfb3ee3f66c08c0e41f10b2aaba172 #master #62d8e45523b1e2dde5ca59b0bc552ff3971beb44 #1.6.1
 
 # >v0.99.beta19 requires Autoconf 2.71
 do_git_checkout https://github.com/cacalabs/libcaca.git "$BUILD_DIR"/libcaca-git v0.99.beta19 # 
 
-do_git_checkout https://github.com/TimothyGu/libilbc.git "$BUILD_DIR"/libilbc-git debian #7b350230ac8793078be081ed8386f20c80681046
+do_git_checkout https://github.com/TimothyGu/libilbc.git "$BUILD_DIR"/libilbc-git 7b350230ac8793078be081ed8386f20c80681046 #debian
 
-do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git v1.10.0 #master
+version=`echo $ubuntu_version'<=16.04' | bc -l`
+if [ $version -eq 1 ]; then
+    do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git v1.9.6;
+else
+    do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git v1.10.0 #master
+fi
 
 ### vdeps
 
-do_git_checkout https://code.videolan.org/videolan/libbluray.git "$BUILD_DIR"/libbluray-git bb5bc108ec695889855f06df338958004ff289ef ##master
+do_git_checkout https://code.videolan.org/videolan/libbluray.git "$BUILD_DIR"/libbluray-git bb5bc108ec695889855f06df338958004ff289ef #master
 
-do_git_checkout https://code.videolan.org/videolan/dav1d.git "$BUILD_DIR"/libdav1d-git master #8291a66e50f2a1f5fcfa8615379d31ff15626991
+do_git_checkout https://code.videolan.org/videolan/dav1d.git "$BUILD_DIR"/libdav1d-git 8291a66e50f2a1f5fcfa8615379d31ff15626991 #master
 
 #svn checkout http://svn.xvid.org/trunk/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
 #svn checkout http://svn.xvid.org/tags/release-1_3_7/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
 svn checkout https://svn.xvid.org/tags/release-1_3_7/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
 
-do_git_checkout https://code.videolan.org/videolan/x264.git "$BUILD_DIR"/x264-git master #da14df5535fd46776fb1c9da3130973295c87aca
+do_git_checkout https://code.videolan.org/videolan/x264.git "$BUILD_DIR"/x264-git da14df5535fd46776fb1c9da3130973295c87aca #master
 
-do_git_checkout https://bitbucket.org/multicoreware/x265_git.git "$BUILD_DIR"/x265-git master #fa2770934b8f3d88aa866c77f27cb63f69a9ed39 #3.2.1
+do_git_checkout https://bitbucket.org/multicoreware/x265_git.git "$BUILD_DIR"/x265-git fa2770934b8f3d88aa866c77f27cb63f69a9ed39 #master #3.2.1
 
-do_git_checkout https://github.com/fraunhoferhhi/vvenc.git "$BUILD_DIR"/vvenc-git master #81a3b6c06cfa186fa2eeccf1d8975c9ed027a214 #v1.13.0
+do_git_checkout https://github.com/fraunhoferhhi/vvenc.git "$BUILD_DIR"/vvenc-git v1.13.0
 
-do_git_checkout https://chromium.googlesource.com/webm/libvpx "$BUILD_DIR"/libvpx-git main #2c38ade434e51c6b1980a675b1c8cbee229b49ff #1.8.2
+do_git_checkout https://chromium.googlesource.com/webm/libvpx "$BUILD_DIR"/libvpx-git 2c38ade434e51c6b1980a675b1c8cbee229b49ff #main #1.8.2
 
-do_git_checkout https://github.com/georgmartius/vid.stab.git vid.stab-git master #8dff7ad3c10ac663745f2263037f6e42b993519c #0.98b
+do_git_checkout https://github.com/georgmartius/vid.stab.git vid.stab-git 8dff7ad3c10ac663745f2263037f6e42b993519c #master #0.98b
 
 # Also a main. Weird
-do_git_checkout https://aomedia.googlesource.com/aom "$BUILD_DIR"/aom-git master #402e264b94fd74bdf66837da216b6251805b4ae4
+do_git_checkout https://aomedia.googlesource.com/aom "$BUILD_DIR"/aom-git 402e264b94fd74bdf66837da216b6251805b4ae4 #master
 
 do_git_checkout https://github.com/FFmpeg/FFmpeg.git "$BUILD_DIR"/FFmpeg-git n7.1 #n6.1.2 #n6.0 #n5.1.6 #n5.0 #n4.4.5 #n4.4.2 #n4.3.1 #n4.2.2 #master
 }
@@ -1979,7 +1994,7 @@ build_dav1d #wants nasm, meson, ninja, doxygen, dot
 build_Xvid #wants yasm,
 build_x264 #
 build_x265 #wants numa, nasm
-build_vvenc #
+build_vvenc
 build_libvpx #
 build_libvidstab #
 build_libaom #
