@@ -39,12 +39,14 @@ sudo apt install w3m libxext-dev libgdbm-dev libsqlite3-dev libreadline6-dev lib
 sudo apt install \
   libbz2-dev \
   libcairo2-dev \
+  libpciaccess-dev \
   libsdl1.2-dev \
   libva-dev \
   libvdpau-dev \
   libxcb1-dev \
   libxcb-shm0-dev \
-  libxcb-xfixes0-dev
+  libxcb-xfixes0-dev \
+  xutils-dev
 #  libass-dev \
 #  libcaca-dev \
 #  libfreetype6-dev \

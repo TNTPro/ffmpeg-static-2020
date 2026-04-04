@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# ffmpeg static build 7.1.0
+# ffmpeg static build 8.1.0
 
 set -e
 set -u
@@ -63,6 +63,7 @@ case $OS in
     platform='linux'
     ;;
 esac
+ubuntu_version=`lsb_release -rs`
 
 #if you want a rebuild
 #rm -rf "$BUILD_DIR" "$TARGET_DIR"
@@ -221,6 +222,10 @@ download \
   "https://github.com/ninja-build/ninja/releases/download/v1.12.1/"
 #do_git_checkout https://github.com/ninja-build/ninja.git "$BUILD_DIR"/ninja-build/ninja-git  #master
 
+do_git_checkout https://gitlab.freedesktop.org/mesa/drm.git "$BUILD_DIR"/libdrm-git libdrm-2.4.100
+
+do_git_checkout https://github.com/OCL-dev/ocl-icd.git "$BUILD_DIR"/ocl-icd-git v2.3.2
+
 # v3.4.6 and higher require Autoconf 2.7.1
 do_git_checkout https://github.com/libffi/libffi.git "$BUILD_DIR"/libffi-git v3.4.2
 
@@ -258,11 +263,11 @@ do_git_checkout https://github.com/facebook/zstd.git "$BUILD_DIR"/zstd-git relea
 
 do_git_checkout https://github.com/libexpat/libexpat.git "$BUILD_DIR"/libexpat-git R_2_6_3 #master
 
-do_git_checkout https://github.com/openssl/openssl.git "$BUILD_DIR"/openssl-old-git OpenSSL_1_0_2u
+#do_git_checkout https://github.com/openssl/openssl.git "$BUILD_DIR"/openssl-old-git OpenSSL_1_1_1w
 
-do_git_checkout https://git.ffmpeg.org/rtmpdump "$BUILD_DIR"/rtmpdump-git master #6f6bb1353fc84f4cc37138baa99f586750028a01
+do_git_checkout https://github.com/openssl/openssl.git "$BUILD_DIR"/openssl-git master #OpenSSL_1_1_1w OpenSSL_1_1_1 OpenSSL_1_1_0l
 
-#do_git_checkout https://github.com/openssl/openssl.git "$BUILD_DIR"/openssl-git OpenSSL_1_1_1d #OpenSSL_1_1_0l
+do_git_checkout https://git.ffmpeg.org/rtmpdump "$BUILD_DIR"/rtmpdump-git 138fdb258d9fc26f1843fd1b891180416c9dc575 #6f6bb1353fc84f4cc37138baa99f586750028a01
 
 #download \
 #  "Python-2.7.17.tar.xz" \
@@ -311,8 +316,12 @@ do_git_checkout https://github.com/xiph/opus.git "$BUILD_DIR"/opus-git main #7db
 do_git_checkout https://git.code.sf.net/p/soxr/code "$BUILD_DIR"/soxr-git master #945b592b70470e29f917f4de89b4281fbbd540c0 #0.1.3
 
 #do_git_checkout https://github.com/kubo/flite.git $BUILD_DIR/flite-git master #4681a5fb82afb9036c6dd6a9303892f8dc7b8e69
-#do_git_checkout https://github.com/festvox/flite.git $BUILD_DIR/flite-git master #
-do_git_checkout https://github.com/TNTPro/ffmpeg-libflite2.0.0.git $BUILD_DIR/flite-git main #a193a909265fc6a91b15d8d5f136d30d000c2ea3
+version=`echo $ubuntu_version'<=20.04' | bc -l`
+if [ $version -eq 1 ]; then
+    do_git_checkout https://github.com/TNTPro/ffmpeg-libflite2.0.0.git $BUILD_DIR/flite-git a193a909265fc6a91b15d8d5f136d30d000c2ea3 #main
+else
+    do_git_checkout https://github.com/festvox/flite.git $BUILD_DIR/flite-git 6c9f20dc915b17f5619340069889db0aa007fcdc #master
+fi
 
 do_git_checkout https://github.com/google/snappy.git $BUILD_DIR/snappy-git main #32ded457c0b1fe78ceb8397632c416568d6714a0 #1.1.9
 cd $BUILD_DIR/snappy-git
@@ -396,7 +405,7 @@ do_git_checkout https://github.com/uclouvain/openjpeg.git "$BUILD_DIR"/openjpeg-
 # >v0.3.3 causes "can't find setuptools error" used instead of distutils (python)
 do_git_checkout https://github.com/lensfun/lensfun.git "$BUILD_DIR"/lensfun-git v0.3.3 #v0.3.1 #v0.3.95 #master
 
-do_git_checkout https://github.com/sekrit-twc/zimg.git "$BUILD_DIR"/zimg-git release-3.0.5 #master
+do_git_checkout https://github.com/sekrit-twc/zimg.git "$BUILD_DIR"/zimg-git master #release-3.0.5
 
 ### tdeps
 
@@ -421,9 +430,14 @@ do_git_checkout https://github.com/libass/libass.git "$BUILD_DIR"/libass-git mas
 # >1.82.0 causes tesseract not found using pkg-config error
 do_git_checkout https://github.com/DanBloomberg/leptonica.git "$BUILD_DIR"/leptonica-git 1.82.0 #1.81.0 #master
 
-#do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 4.1
+version=`echo $ubuntu_version'<=18.04' | bc -l`
+if [ $version -eq 1 ]; then
+    do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git 4.1
+else
+    do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git main #2a944fbe98ed4408a5f0fd5693c398a9cebaf6d4 #66cf74f2dd82790444ef321d3bf03fa303e9caef #4.0.0-beta.3
+fi
 #do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git a2e72f258a3bd6811cae226a01802d891407409f # #315
-do_git_checkout https://github.com/tesseract-ocr/tesseract.git tesseract-git main #2a944fbe98ed4408a5f0fd5693c398a9cebaf6d4 #66cf74f2dd82790444ef321d3bf03fa303e9caef #4.0.0-beta.3
+
 
 download \
   "libid3tag-0.15.1b.tar.gz" \
@@ -438,13 +452,25 @@ do_git_checkout https://github.com/cacalabs/libcaca.git "$BUILD_DIR"/libcaca-git
 
 do_git_checkout https://github.com/TimothyGu/libilbc.git "$BUILD_DIR"/libilbc-git debian #7b350230ac8793078be081ed8386f20c80681046
 
-do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git v1.10.0 #master
+version=`echo $ubuntu_version'<=16.04' | bc -l`
+if [ $version -eq 1 ]; then
+    do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git v1.9.6;
+else
+    do_git_checkout https://github.com/dyne/frei0r.git "$BUILD_DIR"/frei0r-git v1.10.0 #master
+fi
 
 ### vdeps
 
-do_git_checkout https://code.videolan.org/videolan/libbluray.git "$BUILD_DIR"/libbluray-git bb5bc108ec695889855f06df338958004ff289ef ##master
+# 20.5.0 requires libva>=1.10.0
+do_git_checkout https://github.com/Intel-Media-SDK/MediaSDK.git "$BUILD_DIR"/libmfx-git intel-mediasdk-20.4.1 #master
+
+do_git_checkout https://code.videolan.org/videolan/libbluray.git "$BUILD_DIR"/libbluray-git master #bb5bc108ec695889855f06df338958004ff289ef
 
 do_git_checkout https://code.videolan.org/videolan/dav1d.git "$BUILD_DIR"/libdav1d-git master #8291a66e50f2a1f5fcfa8615379d31ff15626991
+
+do_git_checkout https://gitlab.com/AOMediaCodec/SVT-AV1.git "$BUILD_DIR"/SVT-AV1-git master #v2.3.0
+
+do_git_checkout https://github.com/cisco/openh264.git "$BUILD_DIR"/openh264-git master #v1.4.0
 
 #svn checkout http://svn.xvid.org/trunk/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
 #svn checkout http://svn.xvid.org/tags/release-1_3_7/xvidcore "$BUILD_DIR"/xvidcore-svn --username anonymous --password ""
@@ -463,7 +489,7 @@ do_git_checkout https://github.com/georgmartius/vid.stab.git vid.stab-git master
 # Also a main. Weird
 do_git_checkout https://aomedia.googlesource.com/aom "$BUILD_DIR"/aom-git master #402e264b94fd74bdf66837da216b6251805b4ae4
 
-do_git_checkout https://github.com/FFmpeg/FFmpeg.git "$BUILD_DIR"/FFmpeg-git n7.1 #n6.1.2 #n6.0 #n5.1.6 #n5.0 #n4.4.5 #n4.4.2 #n4.3.1 #n4.2.2 #master
+do_git_checkout https://github.com/FFmpeg/FFmpeg.git "$BUILD_DIR"/FFmpeg-git n8.1 #n6.1.2 #n6.0 #n5.1.6 #n5.0 #n4.4.5 #n4.4.2 #n4.3.1 #n4.2.2 #master
 }
 
 TARGET_DIR_SED=$(echo $TARGET_DIR | awk '{gsub(/\//, "\\/"); print}')
@@ -543,6 +569,30 @@ echo
 echo
   cd $BUILD_DIR/
   cp ./ninja "$TARGET_DIR"/bin/
+}
+
+build_libdrm() {
+echo
+/bin/echo -e "\e[93m*** Building libdrm ***\e[39m"
+echo
+  cd $BUILD_DIR/libdrm-*
+  [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+  [ ! -f configure ] && ./autogen.sh --prefix=$TARGET_DIR --exec-prefix=$TARGET_DIR --enable-static --disable-shared PKG_CONFIG_PATH="${TARGET_DIR}/lib/pkgconfig"
+  ./configure --prefix=$TARGET_DIR --exec-prefix=$TARGET_DIR --enable-static --disable-shared PKG_CONFIG_PATH="${TARGET_DIR}/lib/pkgconfig" 
+  make -j $jval
+  make install
+}
+
+build_opencl() {
+echo
+/bin/echo -e "\e[93m*** Building opencl ***\e[39m"
+echo
+  cd $BUILD_DIR/ocl-icd-*
+  [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+  [ ! -f configure ] && ./bootstrap
+  ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
+  make -j $jval
+  make install
 }
 
 build_libffi() {
@@ -674,14 +724,14 @@ echo
 
 build_OpenSSL_RTMP() {
 echo
-/bin/echo -e "\e[93m*** Building OpenSSL for libRTMP ***\e[39m"
+/bin/echo -e "\e[93m*** Building OpenSSL_1_1_1w for libRTMP ***\e[39m"
 echo
   cd $BUILD_DIR/openssl-old*
   [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
   if [ "$platform" = "darwin" ]; then
     ./Configure darwin64-x86_64-cc --prefix=$TARGET_DIR
   elif [ "$platform" = "linux" ]; then
-    ./config --prefix=$TARGET_DIR no-shared
+    ./config --prefix=$TARGET_DIR --openssldir=$TARGET_DIR no-shared
   fi
   make -j $jval
   make install
@@ -692,17 +742,14 @@ echo
 /bin/echo -e "\e[93m*** Building OpenSSL ***\e[39m"
 echo
   cd $BUILD_DIR/openssl-git
-  git_hard_reset
-  git checkout master
-  git_hard_reset
   [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
   if [ "$platform" = "darwin" ]; then
     ./Configure darwin64-x86_64-cc --prefix=$TARGET_DIR
   elif [ "$platform" = "linux" ]; then
-    ./config --prefix=$TARGET_DIR no-shared
+    ./config --prefix=$TARGET_DIR --openssldir=$TARGET_DIR --libdir=$TARGET_DIR/lib no-shared
   fi
   make -j $jval
-  make install
+  make install_sw
 }
 
 Python() {
@@ -765,7 +812,7 @@ echo
 }
 
 build_librtmp() {
-# needs old version of openSSL
+# needs old version of openSSL?
 echo
 /bin/echo -e "\e[93m*** Building librtmp ***\e[39m"
 echo
@@ -1565,6 +1612,18 @@ echo
 
 ### vdeps
 
+build_libmfx() {
+echo
+/bin/echo -e "\e[93m*** Building libmfx ***\e[39m"
+echo
+  cd $BUILD_DIR/libmfx-*
+  [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+  mkdir -p build && cd build
+  cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS=OFF ..
+  make -j $jval
+  make install
+}
+
 build_libbluray() {
 # needs libxml2, freetype, fontconfig, (ANT & javac for compiling OR --disable-bdjava-jar)
 echo
@@ -1591,6 +1650,41 @@ echo
   ninja -j 1
   ninja install
   #cp build/src/libdav1d.a $TARGET_DIR/lib || exit 1 # avoid 'run ranlib' weird failure, possibly older meson's https://github.com/mesonbuild/meson/issues/4138 :|
+}
+
+build_SVT_AV1() {
+echo
+/bin/echo -e "\e[93m*** Building SVT-AV1 ***\e[39m"
+echo
+  cd $BUILD_DIR/SVT-AV1-*
+  [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+  cd Build/
+  cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DBUILD_SHARED_LIBS=0 ..
+  make -j $jval
+  make install
+}
+
+build_OpenH264() {
+echo
+/bin/echo -e "\e[93m*** Building OpenH264 ***\e[39m"
+echo
+  cd $BUILD_DIR/openh264-*
+  [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+  sed -i "s,\/usr\/local,"$TARGET_DIR"," "./Makefile"
+  make -j $jval OS=linux ARCH=x86_64 NDK=0 TARGET=$TARGET_DIR PREFIX="$TARGET_DIR" STATIC=1
+  make install
+}
+
+build_OpenH264meson() {
+echo
+/bin/echo -e "\e[93m*** Building OpenH264 ***\e[39m"
+echo
+  cd $BUILD_DIR/openh264-*
+  [ $rebuild -eq 1 -a -f Makefile ] && make distclean || true
+  ${BUILD_DIR}/meson-git/meson.py setup --prefix=${TARGET_DIR} --libdir=${TARGET_DIR}/lib --buildtype=release --strip --default-library=static builddir
+  cd builddir/
+  ninja -j 1
+  ninja install
 }
 
 build_Xvid() {
@@ -1710,7 +1804,7 @@ if [ "$platform" = "linux" ]; then
   [ ! -f config.status ] && ./configure \
     --prefix="$TARGET_DIR" \
     --pkg-config-flags="--static" \
-    --extra-version=Tec-7.1.0 \
+    --extra-version=Tec-8.1.0 \
     --extra-libs="-lpthread -lm -lz -ldl -lharfbuzz" \
     --extra-ldexeflags="-static" \
     --enable-pic \
@@ -1730,15 +1824,18 @@ if [ "$platform" = "linux" ]; then
     --enable-libcaca \
     --enable-libcdio \
     --enable-libdav1d \
+    --enable-libdrm \
     --enable-libfdk-aac \
     --enable-libflite \
     --enable-libfreetype \
     --enable-libfribidi \
     --enable-libilbc \
+  --disable-libmfx \
     --enable-libmp3lame \
     --enable-libmysofa \
     --enable-libopencore-amrnb \
     --enable-libopencore-amrwb \
+    --enable-libopenh264 \
     --enable-libopenjpeg \
     --enable-libopus \
   --disable-libpulse \
@@ -1747,6 +1844,7 @@ if [ "$platform" = "linux" ]; then
     --enable-libsnappy \
     --enable-libsoxr \
     --enable-libspeex \
+    --enable-libsvtav1 \
     --enable-libtesseract \
     --enable-libtheora \
     --enable-libtwolame \
@@ -1771,16 +1869,23 @@ if [ "$platform" = "linux" ]; then
     --enable-cuvid \
     --enable-ffnvcodec \
     --enable-nvenc \
+  --disable-opencl \
+  --disable-opengl \
     --enable-openssl \
   --disable-sndio \
   --disable-sdl2 \
   --disable-vaapi \
+  --disable-vapoursynth \
     --enable-vdpau \
   --disable-xlib \
     --enable-zlib
 # Not working yet
 #
+#    --enable-libmfx \
 #    --enable-liblensfun \
+#    --enable-opencl          enable OpenCL processing [no]
+#    --enable-opengl          enable OpenGL rendering [no]
+#    --enable-vapoursynth     enable VapourSynth demuxer [no]
 
 # ---------------
 # Not tested yet
@@ -1801,7 +1906,6 @@ if [ "$platform" = "linux" ]; then
 #  --enable-libkvazaar      enable HEVC encoding via libkvazaar [no]
 #  --enable-libmodplug      enable ModPlug via libmodplug [no]
 #  --enable-libopencv       enable video filtering via libopencv [no]
-#  --enable-libopenh264     enable H.264 encoding via OpenH264 [no]
 #  --enable-libopenmpt      enable decoding tracked files via libopenmpt [no]
 #  --enable-librav1e        enable AV1 encoding via rav1e [no] (unknown option?)
 #  --enable-librsvg         enable SVG rasterization via librsvg [no]
@@ -1820,10 +1924,7 @@ if [ "$platform" = "linux" ]; then
 #  --enable-decklink        enable Blackmagic DeckLink I/O support [no]
 #  --enable-mediacodec      enable Android MediaCodec support [no] (requires --enable-jni)
 #  --enable-openal          enable OpenAL 1.1 capture support [no]
-#  --enable-opencl          enable OpenCL processing [no]
-#  --enable-opengl          enable OpenGL rendering [no]
 #  --enable-pocketsphinx    enable PocketSphinx, needed for asr filter [no]
-#  --enable-vapoursynth     enable VapourSynth demuxer [no]
 #
 # ---------------
 # Deprecated
@@ -1885,6 +1986,8 @@ build_nasm #wants asciidoc-9.0.4 and xmlto-0.0.28
 #meson
 extract_cmake
 extract_ninja
+build_libdrm
+#build_opencl
 build_libffi #wants DejaGnu-1.6
 #linuxPAM
 #libcap
@@ -1896,10 +1999,10 @@ build_libzstd #wants zlib, lzma
 build_libexpat #
 #Python
 build_nv_headers #
-build_glib #wants python, iconv, zlib, libffi, libmount, libFAM, libELF, gtk-doc
-build_OpenSSL_RTMP # Should be before Python. Wants ZLIB
+build_glib #wants python, iconv, zlib, libffi, libmount, libFAM, libELF, gtk-doc, libunwind-generic
+#build_OpenSSL_RTMP # Should be before Python. Wants ZLIB
+build_OpenSSL # Should be before Python. Wants ZLIB
 build_librtmp # wants old openssl, 1.0.2u works
-#build_OpenSSL # Should be before Python. Wants ZLIB
 #######build_autoconf
 #######build_automake
 build_libcdio #wants icovn, ncurses, libvcd
@@ -1974,12 +2077,15 @@ build_frei0r # opencv, gavl, cairo
 
 vdeps() {
 echo -en "\007"
+#build_libmfx #needs libva, libdrm
 build_libbluray #wants libxml2, freetype2, fontconfig
 build_dav1d #wants nasm, meson, ninja, doxygen, dot
+build_SVT_AV1
+build_OpenH264
 build_Xvid #wants yasm,
 build_x264 #
 build_x265 #wants numa, nasm
-build_vvenc #
+build_vvenc
 build_libvpx #
 build_libvidstab #
 build_libaom #
@@ -2017,7 +2123,6 @@ vdp_time=$(date +%H:%M)
 echo
 echo $vdp_time
 vdeps
-
 echo -en "\007"
 
 ff_time=$(date +%H:%M)
